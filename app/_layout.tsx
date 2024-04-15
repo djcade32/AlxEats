@@ -1,5 +1,3 @@
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -7,8 +5,7 @@ import { useEffect } from "react";
 import * as SecureStore from "expo-secure-store";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { View } from "@/components/Themed";
-import { Text } from "react-native";
+import { StatusBar } from "expo-status-bar";
 
 const CLERK_PUBLISHABLE_KEY: any = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -44,12 +41,13 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    mon: require("../assets/fonts/Montserrat-Regular.ttf"),
-    "mon-sb": require("../assets/fonts/Montserrat-SemiBold.ttf"),
-    "mon-b": require("../assets/fonts/Montserrat-Bold.ttf"),
+    nm: require("../assets/fonts/NanumMyeongjo-Regular.ttf"),
+    "nm-sb": require("../assets/fonts/NanumMyeongjo-Bold.ttf"),
+    "nm-b": require("../assets/fonts/NanumMyeongjo-ExtraBold.ttf"),
     futura: require("../assets/fonts/Futura-Regular.ttf"),
     "futura-b": require("../assets/fonts/Futura-Bold.ttf"),
     "futura-sb": require("../assets/fonts/Futura-SemiBold.ttf"),
+    nycd: require("../assets/fonts/NothingYouCouldDo-Regular.ttf"),
   });
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
@@ -70,6 +68,7 @@ export default function RootLayout() {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
       <GestureHandlerRootView style={{ flex: 1 }}>
+        <StatusBar style="light" />
         <RootLayoutNav />
       </GestureHandlerRootView>
     </ClerkProvider>
@@ -78,8 +77,8 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   return (
-    <View>
-      <Text>Home</Text>
-    </View>
+    <Stack>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+    </Stack>
   );
 }
