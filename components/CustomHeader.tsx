@@ -1,9 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { defaultStyles } from "@/constants/Styles";
-import { Ionicons } from "@expo/vector-icons";
-import Colors from "@/constants/Colors";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import Font from "@/constants/Font";
 import { useRouter } from "expo-router";
@@ -37,6 +34,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
+    backgroundColor: "white",
   },
   iconContainer: {
     width: 35,

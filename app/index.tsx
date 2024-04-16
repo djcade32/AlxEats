@@ -41,7 +41,7 @@ const index = () => {
             text={"Get started"}
             buttonStyle={styles.button}
             textStyle={styles.buttonText}
-            onPress={() => router.push("/signup")}
+            onPress={() => router.push("/signup/")}
           />
           <TouchableOpacity>
             <Text style={{ color: Colors.gray, fontSize: Font.small, marginTop: 15 }}>

@@ -61,7 +61,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
-      router.replace("/signup");
+      router.replace("/signup/[email]");
       SplashScreen.hideAsync();
     }
   }, [loaded]);
@@ -85,13 +85,26 @@ function RootLayoutNav() {
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen
-        name="signup"
+        name="signup/index"
         options={{
-          headerShown: true,
           animation: "slide_from_bottom",
           header: () => (
             <CustomHeader
               title="Sign up"
+              headerLeft={
+                <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />
+              }
+            />
+          ),
+          contentStyle: { backgroundColor: "white" },
+        }}
+      />
+      <Stack.Screen
+        name="signup/[email]"
+        options={{
+          header: () => (
+            <CustomHeader
+              title="Personal Information"
               headerLeft={
                 <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />
               }

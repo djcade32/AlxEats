@@ -6,9 +6,14 @@ import CustomTextInput from "@/components/CustomTextInput";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import CustomButton from "@/components/CustomButton";
+import { useRouter } from "expo-router";
 
-const signup = () => {
-  const headerHeight = useHeaderHeight();
+const index = () => {
+  const router = useRouter();
+
+  const handleContinueWithEmail = () => {
+    router.push({ pathname: "/signup/[email]", params: { email: "Test" } });
+  };
 
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
@@ -23,7 +28,7 @@ const signup = () => {
           text="Continue"
           buttonStyle={[styles.btnContainer, { backgroundColor: Colors.primary }]}
           textStyle={[styles.btnText, { color: "white" }]}
-          onPress={() => {}}
+          onPress={handleContinueWithEmail}
         />
         <View style={styles.separatorContainer}>
           <View style={styles.separator} />
@@ -55,7 +60,7 @@ const signup = () => {
   );
 };
 
-export default signup;
+export default index;
 
 const styles = StyleSheet.create({
   container: {

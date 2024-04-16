@@ -1,6 +1,6 @@
 import { Keyboard, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import React, { useState } from "react";
-import { TextInput } from "react-native-gesture-handler";
+import { TextInput, TouchableWithoutFeedback } from "react-native-gesture-handler";
 import Colors from "@/constants/Colors";
 import Font from "@/constants/Font";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,10 +9,12 @@ interface CustomTextInputProps {
   placeholder: string;
   icon: React.ReactNode;
   customStyles?: StyleProp<ViewStyle>;
+  password?: boolean;
 }
 
-const CustomTextInput = ({ icon, placeholder, customStyles }: CustomTextInputProps) => {
+const CustomTextInput = ({ icon, placeholder, customStyles, password }: CustomTextInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
+  const [isSecure, setIsSecure] = useState(false);
   return (
     <View
       style={[
@@ -29,7 +31,18 @@ const CustomTextInput = ({ icon, placeholder, customStyles }: CustomTextInputPro
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         selectionColor={Colors.primary}
+        secureTextEntry={password && !isSecure}
       />
+      <TouchableWithoutFeedback onPress={() => setIsSecure(!isSecure)}>
+        {password && (
+          <Ionicons
+            name={isSecure ? "eye" : "eye-off-outline"}
+            size={24}
+            color={Colors.gray}
+            style={{ paddingRight: 10 }}
+          />
+        )}
+      </TouchableWithoutFeedback>
     </View>
   );
 };
