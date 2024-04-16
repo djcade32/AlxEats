@@ -1,11 +1,14 @@
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import * as SecureStore from "expo-secure-store";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
+import CustomHeader from "@/components/CustomHeader";
+import { Ionicons } from "@expo/vector-icons";
+import Colors from "@/constants/Colors";
 
 const CLERK_PUBLISHABLE_KEY: any = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -49,6 +52,7 @@ export default function RootLayout() {
     "futura-sb": require("../assets/fonts/Futura-SemiBold.ttf"),
     nycd: require("../assets/fonts/NothingYouCouldDo-Regular.ttf"),
   });
+  const router = useRouter();
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
@@ -57,6 +61,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
+      router.replace("/signup");
       SplashScreen.hideAsync();
     }
   }, [loaded]);
@@ -68,7 +73,7 @@ export default function RootLayout() {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <StatusBar style="light" />
+        <StatusBar style="auto" />
         <RootLayoutNav />
       </GestureHandlerRootView>
     </ClerkProvider>
@@ -79,6 +84,22 @@ function RootLayoutNav() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="signup"
+        options={{
+          headerShown: true,
+          animation: "slide_from_bottom",
+          header: () => (
+            <CustomHeader
+              title="Sign up"
+              headerLeft={
+                <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />
+              }
+            />
+          ),
+          contentStyle: { backgroundColor: "white" },
+        }}
+      />
     </Stack>
   );
 }

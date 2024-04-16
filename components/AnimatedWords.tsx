@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import React, { useEffect, useState } from "react";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import Font from "@/constants/Font";

@@ -3,18 +3,21 @@ import React from "react";
 import Colors from "@/constants/Colors";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Font from "@/constants/Font";
-import Button from "@/components/Button";
+import Button from "@/components/CustomButton";
 import { LinearGradient } from "expo-linear-gradient";
 import AnimatedWords from "@/components/AnimatedWords";
+import { useRouter } from "expo-router";
+import CustomButton from "@/components/CustomButton";
 
 const index = () => {
+  const router = useRouter();
   return (
     <View style={{ flex: 1 }}>
       <LinearGradient colors={[Colors.primary, "#051822"]} style={styles.background} />
       <SafeAreaView style={styles.container}>
         <View
           style={{
-            marginTop: 276,
+            marginTop: 175,
             justifyContent: "space-between",
             alignItems: "center",
           }}
@@ -25,13 +28,21 @@ const index = () => {
           />
 
           <AnimatedWords />
-          <Text style={styles.tagLine}>Your Culinary Adventure Starts Here</Text>
+          <View style={{ marginTop: 40, gap: 5 }}>
+            <Text style={styles.tagLine}>Your Culinary Adventure </Text>
+            <Text style={styles.tagLine}>Starts Here</Text>
+          </View>
         </View>
 
         <View
           style={{ flex: 1, justifyContent: "flex-end", paddingBottom: 100, alignItems: "center" }}
         >
-          <Button text={"Get started"} buttonStyle={styles.button} textStyle={styles.buttonText} />
+          <CustomButton
+            text={"Get started"}
+            buttonStyle={styles.button}
+            textStyle={styles.buttonText}
+            onPress={() => router.push("/signup")}
+          />
           <TouchableOpacity>
             <Text style={{ color: Colors.gray, fontSize: Font.small, marginTop: 15 }}>
               Already have an account? Sign in
@@ -67,9 +78,7 @@ const styles = StyleSheet.create({
     fontSize: Font.medium,
     fontFamily: "nm",
     textAlign: "center",
-    maxWidth: "75%",
     letterSpacing: 1.25,
-    marginTop: 40,
   },
   button: {
     backgroundColor: Colors.secondary,
