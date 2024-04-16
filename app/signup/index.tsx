@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
     fontSize: Font.small,
     marginTop: 45,
     textAlign: "center",
+    color: Colors.black,
   },
   separatorContainer: {
     flexDirection: "row",

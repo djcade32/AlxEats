@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import React from "react";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import CustomTextInput from "@/components/CustomTextInput";
 import { Ionicons } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -16,9 +16,17 @@ import Colors from "@/constants/Colors";
 import { ScrollView } from "react-native-gesture-handler";
 import CustomButton from "@/components/CustomButton";
 
+//TODO: Change name of file to personalInfo.tsx
+
 const Page = () => {
   const { email } = useLocalSearchParams();
+  const router = useRouter();
   const keyboardVerticalOffset = Platform.OS === "ios" ? 40 : 0;
+  const userObj = { age: 56 };
+
+  const handleContinuePressed = () => {
+    router.push({ pathname: "/signup/restaurantCriteria", params: userObj });
+  };
 
   return (
     <KeyboardAvoidingView
@@ -33,7 +41,10 @@ const Page = () => {
             paddingBottom: 100,
           }}
         >
-          <ScrollView contentInset={{ bottom: 10 }} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentInset={{ bottom: 10 }}
+            showsVerticalScrollIndicator={Keyboard.isVisible()}
+          >
             <View style={{ height: "65%", gap: 20 }}>
               <View>
                 <Text style={styles.textInputLabel}>Full name</Text>
@@ -83,7 +94,7 @@ const Page = () => {
             text="Continue"
             buttonStyle={[styles.btnContainer, { backgroundColor: Colors.primary }]}
             textStyle={[styles.btnText, { color: "white" }]}
-            onPress={() => {}}
+            onPress={handleContinuePressed}
           />
         </View>
       </TouchableWithoutFeedback>

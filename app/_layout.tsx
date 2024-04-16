@@ -61,7 +61,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
-      router.replace("/signup/[email]");
+      router.replace("/");
       SplashScreen.hideAsync();
     }
   }, [loaded]);
@@ -105,6 +105,20 @@ function RootLayoutNav() {
           header: () => (
             <CustomHeader
               title="Personal Information"
+              headerLeft={
+                <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />
+              }
+            />
+          ),
+          contentStyle: { backgroundColor: "white" },
+        }}
+      />
+      <Stack.Screen
+        name="signup/restaurantCriteria"
+        options={{
+          header: () => (
+            <CustomHeader
+              title="Restaurant Criteria"
               headerLeft={
                 <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />
               }
