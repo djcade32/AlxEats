@@ -43,7 +43,7 @@ const index = () => {
             textStyle={styles.buttonText}
             onPress={() => router.push("/signup/")}
           />
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/signin")}>
             <Text style={{ color: Colors.gray, fontSize: Font.small, marginTop: 15 }}>
               Already have an account? Sign in
             </Text>

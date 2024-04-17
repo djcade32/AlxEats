@@ -61,7 +61,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
-      router.replace("/");
+      router.replace("/signin");
       SplashScreen.hideAsync();
     }
   }, [loaded]);
@@ -91,6 +91,21 @@ function RootLayoutNav() {
           header: () => (
             <CustomHeader
               title="Sign up"
+              headerLeft={
+                <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />
+              }
+            />
+          ),
+          contentStyle: { backgroundColor: "white" },
+        }}
+      />
+      <Stack.Screen
+        name="signin"
+        options={{
+          animation: "slide_from_bottom",
+          header: () => (
+            <CustomHeader
+              title="Welcome back!"
               headerLeft={
                 <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />
               }
