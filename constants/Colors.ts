@@ -4,4 +4,5 @@ export default {
   black: "#1e1e1e",
   gray: "#c2c2c2",
   lightGray: "#EAEAEA",
+  error: "#FF0033",
 };

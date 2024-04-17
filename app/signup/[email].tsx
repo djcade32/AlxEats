@@ -109,12 +109,11 @@ const styles = StyleSheet.create({
   },
   btnContainer: {
     marginTop: 35,
-    width: "100%",
     borderRadius: 25,
+    height: 40,
   },
   btnText: {
     fontSize: 18,
-    paddingVertical: 10,
   },
 });
 

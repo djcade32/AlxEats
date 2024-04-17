@@ -1,5 +1,5 @@
 import { useFonts } from "expo-font";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import * as SecureStore from "expo-secure-store";
@@ -9,6 +9,7 @@ import { StatusBar } from "expo-status-bar";
 import CustomHeader from "@/components/CustomHeader";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
+import { ActivityIndicator, View } from "react-native";
 
 const CLERK_PUBLISHABLE_KEY: any = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -42,7 +43,7 @@ export const unstable_settings = {
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+function InitialLayout() {
   const [loaded, error] = useFonts({
     nm: require("../assets/fonts/NanumMyeongjo-Regular.ttf"),
     "nm-sb": require("../assets/fonts/NanumMyeongjo-Bold.ttf"),
@@ -53,6 +54,8 @@ export default function RootLayout() {
     nycd: require("../assets/fonts/NothingYouCouldDo-Regular.ttf"),
   });
   const router = useRouter();
+  const { isLoaded, isSignedIn } = useAuth();
+  const segments = useSegments();
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
@@ -61,26 +64,30 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
-      router.replace("/signin");
       SplashScreen.hideAsync();
     }
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const inAuthGroup = segments[0] === "(authenticated)";
+
+    if (isSignedIn && !inAuthGroup) {
+      router.replace("/(authenticated)/(tabs)/home");
+    } else if (!isSignedIn) {
+      router.replace("/");
+    }
+  }, [isSignedIn]);
+
+  if (!loaded || !isLoaded) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
   }
 
-  return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <StatusBar style="auto" />
-        <RootLayoutNav />
-      </GestureHandlerRootView>
-    </ClerkProvider>
-  );
-}
-
-function RootLayoutNav() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -142,6 +149,20 @@ function RootLayoutNav() {
           contentStyle: { backgroundColor: "white" },
         }}
       />
+      <Stack.Screen name="(authenticated)/(tabs)" options={{ headerShown: false }} />
     </Stack>
   );
 }
+
+const RootLayoutNav = () => {
+  return (
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY!} tokenCache={tokenCache}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <StatusBar style="light" />
+        <InitialLayout />
+      </GestureHandlerRootView>
+    </ClerkProvider>
+  );
+};
+
+export default RootLayoutNav;
