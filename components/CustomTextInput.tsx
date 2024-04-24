@@ -2,37 +2,53 @@ import { Keyboard, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-na
 import React, { useEffect, useState } from "react";
 import { TextInput, TouchableWithoutFeedback } from "react-native-gesture-handler";
 import Colors from "@/constants/Colors";
-import Font from "@/constants/Font";
 import { Ionicons } from "@expo/vector-icons";
+import { Error as ErrorType } from "@/interfaces";
+import { hasError } from "@/common-utils";
 
 interface CustomTextInputProps {
+  name: string;
   placeholder: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   value: string;
   onChange?: (text: string) => void;
   customStyles?: StyleProp<ViewStyle>;
   password?: boolean;
-  error?: boolean;
+  errors?: ErrorType[];
+  keyboardType?: "default" | "numeric" | "email-address" | "phone-pad";
+  maxLength?: number;
+  setErrors?: (error: ErrorType[]) => void;
+  disabled?: boolean;
 }
 
 const CustomTextInput = ({
+  name,
   icon,
   placeholder,
   customStyles,
   password,
   onChange,
   value,
-  error,
+  errors,
+  keyboardType,
+  maxLength,
+  setErrors,
+  disabled,
 }: CustomTextInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isSecure, setIsSecure] = useState(false);
-  const [isError, setIsError] = useState(error || false);
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
-    if (error) {
-      setIsError(error);
+    if (errors && !setErrors) {
+      throw new Error(
+        "If errors prop is set you must provide setErrors prop in CustomTextInput component"
+      );
     }
-  }, [error]);
+    if (errors) {
+      setIsError(hasError(errors, name));
+    }
+  }, [errors]);
 
   const getBorderColor = () => {
     if (isError && !isFocused) {
@@ -42,35 +58,49 @@ const CustomTextInput = ({
   };
 
   const handleTextChange = (text: string) => {
-    if (isError) {
-      setIsError(false);
-    }
     onChange && onChange(text);
   };
   return (
-    <View style={[styles.container, { borderColor: getBorderColor() }, customStyles]}>
-      {icon}
-      <TextInput
-        value={value}
-        placeholder={placeholder}
-        placeholderTextColor={Colors.gray}
-        style={[styles.textInput]}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        selectionColor={Colors.primary}
-        secureTextEntry={password && !isSecure}
-        onChangeText={(text) => handleTextChange(text)}
-      />
-      <TouchableWithoutFeedback onPress={() => setIsSecure(!isSecure)}>
-        {password && (
-          <Ionicons
-            name={isSecure ? "eye" : "eye-off-outline"}
-            size={24}
-            color={Colors.gray}
-            style={{ paddingRight: 10 }}
-          />
+    <View>
+      <View style={[styles.container, { borderColor: getBorderColor() }, customStyles]}>
+        {icon}
+        <TextInput
+          value={value}
+          placeholder={placeholder}
+          placeholderTextColor={Colors.gray}
+          style={[styles.textInput, { color: disabled ? Colors.gray : Colors.black }]}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          selectionColor={Colors.primary}
+          secureTextEntry={password && !isSecure}
+          onChangeText={(text) => handleTextChange(text)}
+          keyboardType={keyboardType}
+          maxLength={maxLength}
+          onChange={(text) => {
+            if (text.nativeEvent.text === value) return;
+            setErrors && errors && setErrors([...errors.filter((e) => e.field !== name)]);
+          }}
+          editable={!disabled}
+        />
+        <TouchableWithoutFeedback onPress={() => setIsSecure(!isSecure)}>
+          {password && (
+            <Ionicons
+              name={isSecure ? "eye" : "eye-off-outline"}
+              size={24}
+              color={Colors.gray}
+              style={{ paddingRight: 10 }}
+            />
+          )}
+        </TouchableWithoutFeedback>
+      </View>
+
+      <View style={{ minHeight: 20, paddingHorizontal: 5 }}>
+        {isError && errors && hasError(errors, name) && (
+          <Text style={{ fontSize: 12, color: Colors.error, marginTop: 5 }}>
+            {errors.find((e) => e.field === name)?.message}
+          </Text>
         )}
-      </TouchableWithoutFeedback>
+      </View>
     </View>
   );
 };
@@ -91,6 +121,5 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     fontSize: 18,
-    color: Colors.black,
   },
 });

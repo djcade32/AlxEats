@@ -3,13 +3,32 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import * as SecureStore from "expo-secure-store";
-import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
+import { ClerkProvider, useAuth, useUser } from "@clerk/clerk-expo";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import CustomHeader from "@/components/CustomHeader";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import { ActivityIndicator, View } from "react-native";
+import { AppRegistry } from "react-native";
+import { initializeFirebase } from "@/firebase";
+import { useUserStore } from "@/store/userStorage";
+import { checkIfUserExistsInDB } from "@/common-utils";
+import { useAppStore } from "@/store/app-storage";
+import { LinearGradient } from "expo-linear-gradient";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBWVyMn8YYpYmoOiMPM7JjRuSm2e2UT_9U",
+  // apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: "alxeats-cb5e6.firebaseapp.com",
+  projectId: "alxeats-cb5e6",
+  storageBucket: "alxeats-cb5e6.appspot.com",
+  messagingSenderId: "397672290034",
+  appId: "1:397672290034:web:0d1be2c4503edb2a32226b",
+  measurementId: "G-DEE5TSG4K3",
+};
+
+initializeFirebase();
 
 const CLERK_PUBLISHABLE_KEY: any = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -55,6 +74,7 @@ function InitialLayout() {
   });
   const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
+  const { user } = useUser();
   const segments = useSegments();
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
@@ -72,8 +92,19 @@ function InitialLayout() {
     if (!isLoaded) return;
 
     const inAuthGroup = segments[0] === "(authenticated)";
-
-    if (isSignedIn && !inAuthGroup) {
+    //Check if user signed in is in the database
+    if (user && isSignedIn && !inAuthGroup) {
+      checkIfUserExistsInDB(user?.id).then((exists) => {
+        if (exists) {
+          router.replace("/(authenticated)/(tabs)/home");
+        } else {
+          router.push({
+            pathname: "/signup/restaurantCriteria",
+            params: { emailParam: user.emailAddresses[0].emailAddress },
+          });
+        }
+      });
+    } else if (isSignedIn && !inAuthGroup) {
       router.replace("/(authenticated)/(tabs)/home");
     } else if (!isSignedIn) {
       router.replace("/");
@@ -83,7 +114,11 @@ function InitialLayout() {
   if (!loaded || !isLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <LinearGradient
+          colors={[Colors.primary, "#051822"]}
+          style={{ position: "absolute", left: 0, right: 0, top: 0, height: "100%" }}
+        />
+        <ActivityIndicator size="large" color={"white"} />
       </View>
     );
   }
@@ -122,7 +157,7 @@ function InitialLayout() {
         }}
       />
       <Stack.Screen
-        name="signup/[email]"
+        name="signup/personalInfo"
         options={{
           header: () => (
             <CustomHeader
@@ -149,6 +184,7 @@ function InitialLayout() {
           contentStyle: { backgroundColor: "white" },
         }}
       />
+
       <Stack.Screen name="(authenticated)/(tabs)" options={{ headerShown: false }} />
     </Stack>
   );
@@ -164,5 +200,6 @@ const RootLayoutNav = () => {
     </ClerkProvider>
   );
 };
+AppRegistry.registerComponent("alxeats", () => InitialLayout);
 
 export default RootLayoutNav;

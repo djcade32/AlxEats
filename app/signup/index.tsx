@@ -1,18 +1,84 @@
 import { Keyboard, StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
-import React from "react";
-import { useHeaderHeight } from "@react-navigation/elements";
+import React, { useState } from "react";
 import Font from "@/constants/Font";
 import CustomTextInput from "@/components/CustomTextInput";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import CustomButton from "@/components/CustomButton";
 import { useRouter } from "expo-router";
+import * as Haptics from "expo-haptics";
+import { Error } from "@/interfaces";
+import { createError } from "@/common-utils";
+import { getDb } from "@/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import useWarmupBrowser from "@/hooks/useWarmupBrowser";
+import { useAuth, useOAuth, useUser } from "@clerk/clerk-expo";
+import { SignInMethods, Strategy } from "@/enums";
+import { useUserStore } from "@/store/userStorage";
+import { useAppStore } from "@/store/app-storage";
 
 const index = () => {
+  useWarmupBrowser();
   const router = useRouter();
+  const { updateSignInMethod } = useAppStore();
+  const db = getDb();
 
-  const handleContinueWithEmail = () => {
-    router.push({ pathname: "/signup/[email]", params: { email: "Test" } });
+  const { startOAuthFlow: appleAuth } = useOAuth({ strategy: Strategy.Apple });
+  const { startOAuthFlow: googleAuth } = useOAuth({ strategy: Strategy.Google });
+
+  const [email, setEmail] = useState("");
+  const [errorState, setErrorState] = useState<Error[]>([]);
+
+  const validateForm = (): boolean => {
+    if (!email.includes("@") || !email.includes(".")) {
+      setErrorState((prev) => [
+        ...prev,
+        createError("email", "Please enter a valid email address."),
+      ]);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return false;
+    }
+    return true;
+  };
+
+  const handleContinueWithEmail = async (): Promise<void> => {
+    if (!validateForm()) return;
+    const emailExists = await checkIfEmailExists();
+    if (emailExists) return;
+    router.push({ pathname: "/signup/restaurantCriteria", params: { emailParam: email } });
+    setErrorState([]);
+  };
+
+  const checkIfEmailExists = async (): Promise<boolean> => {
+    let emailExists = false;
+    if (!db || !email) return emailExists;
+    const q = query(collection(db, "users"), where("email", "==", email.toLowerCase()));
+    const querySnapshot = await getDocs(q);
+
+    emailExists = querySnapshot.docs.length > 0;
+    if (emailExists) {
+      setErrorState((prev) => [
+        ...prev,
+        createError("email", "Email already exists. Please log in."),
+      ]);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+    return emailExists;
+  };
+
+  const onSelectAuth = async (strategy: Strategy) => {
+    const selectedAuth = {
+      [Strategy.Apple]: appleAuth,
+      [Strategy.Google]: googleAuth,
+    }[strategy];
+    try {
+      const { createdSessionId, setActive } = await selectedAuth();
+      if (createdSessionId) {
+        setActive!({ session: createdSessionId });
+      }
+    } catch (e) {
+      console.log("OAuth error: ", e);
+    }
   };
 
   return (
@@ -20,15 +86,21 @@ const index = () => {
       <View style={styles.container}>
         <Text style={styles.directions}>Sign up with one of the provided options</Text>
         <CustomTextInput
+          name="email"
           placeholder="Email"
           icon={<Ionicons name="mail-outline" size={24} color={Colors.gray} />}
           customStyles={{ marginTop: 35 }}
+          value={email}
+          onChange={setEmail}
+          errors={errorState}
+          setErrors={setErrorState}
         />
         <CustomButton
           text="Continue"
           buttonStyle={[styles.btnContainer, { backgroundColor: Colors.primary }]}
           textStyle={[styles.btnText, { color: "white" }]}
           onPress={handleContinueWithEmail}
+          disabled={!email}
         />
         <View style={styles.separatorContainer}>
           <View style={styles.separator} />
@@ -36,14 +108,17 @@ const index = () => {
           <View style={styles.separator} />
         </View>
         <CustomButton
-          text="Continue with Phone"
+          text="Continue with Apple"
           buttonStyle={[
             styles.btnContainer,
             { backgroundColor: "white", borderWidth: 1, borderColor: Colors.black },
           ]}
           textStyle={[styles.btnText, { color: Colors.black }]}
-          onPress={() => {}}
-          icon={<Ionicons name="phone-portrait-outline" size={24} color={Colors.black} />}
+          onPress={() => {
+            onSelectAuth(Strategy.Apple);
+            updateSignInMethod(SignInMethods.Apple);
+          }}
+          icon={<Ionicons name="logo-apple" size={24} color={Colors.black} />}
         />
         <CustomButton
           text="Continue with Google"
@@ -52,7 +127,10 @@ const index = () => {
             { backgroundColor: "white", borderWidth: 1, borderColor: Colors.black },
           ]}
           textStyle={[styles.btnText, { color: Colors.black }]}
-          onPress={() => {}}
+          onPress={() => {
+            onSelectAuth(Strategy.Google);
+            updateSignInMethod(SignInMethods.Google);
+          }}
           icon={<Ionicons name="logo-google" size={24} color={Colors.black} />}
         />
       </View>

@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import React, { useCallback, useState } from "react";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import Font from "@/constants/Font";
 import DraggableFlatList, {
   ScaleDecorator,
@@ -10,11 +10,7 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import Colors from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import CustomButton from "@/components/CustomButton";
-
-interface Criteria {
-  index: number;
-  critera: string;
-}
+import { Criteria } from "@/interfaces";
 
 const INIT_CRITERIA: Criteria[] = [
   { index: 1, critera: "Food Quality" },
@@ -25,7 +21,11 @@ const INIT_CRITERIA: Criteria[] = [
 ];
 
 const restaurantCriteria = () => {
-  const userObj = useLocalSearchParams();
+  const router = useRouter();
+  const { emailParam } = useLocalSearchParams() as {
+    emailParam: string;
+  };
+
   const [data, setData] = useState(INIT_CRITERIA);
 
   // This function is called when the user finishes dragging the list. It updates the index of each item in the list.
@@ -36,6 +36,18 @@ const restaurantCriteria = () => {
     });
 
     setData(newData);
+  };
+
+  const handleContinuePressed = async () => {
+    const user = {
+      email: emailParam,
+      criteria: JSON.stringify(data),
+    };
+
+    router.push({
+      pathname: "/signup/personalInfo",
+      params: user as any,
+    });
   };
 
   const renderItem = useCallback(({ item, drag, isActive }: RenderItemParams<Criteria>) => {
@@ -76,10 +88,10 @@ const restaurantCriteria = () => {
         style={{ paddingHorizontal: 15, marginTop: 40 }}
       />
       <CustomButton
-        text="Create account"
+        text="Continue"
         buttonStyle={[styles.btnContainer, { backgroundColor: Colors.primary }]}
         textStyle={[styles.btnText, { color: "white" }]}
-        onPress={() => {}}
+        onPress={handleContinuePressed}
       />
     </View>
   );
