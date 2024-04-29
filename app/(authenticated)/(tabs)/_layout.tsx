@@ -4,6 +4,7 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import CustomHeader from "@/components/CustomHeader";
+import CustomAuthenticatedHeader from "@/components/CustomAuthenticatedHeader";
 
 const Layout = () => {
   return (
@@ -23,8 +24,11 @@ const Layout = () => {
         options={{
           title: "Home",
           tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
-          headerTransparent: true,
-          //   headerShown: false,
+          header: () => (
+            <CustomAuthenticatedHeader
+              headerRight={<Ionicons name="notifications-outline" size={22} color={Colors.black} />}
+            />
+          ),
         }}
       />
       <Tabs.Screen

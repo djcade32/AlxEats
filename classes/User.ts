@@ -1,4 +1,3 @@
-import profile from "@/app/(authenticated)/(tabs)/profile";
 import { Criteria } from "@/interfaces";
 
 interface UserInterface {
@@ -9,7 +8,6 @@ interface UserInterface {
   favoriteCuisine: string;
   criteria: Criteria[];
   createdAt: string;
-  profilePicture: string | null;
 }
 
 export class User implements UserInterface {
@@ -20,8 +18,7 @@ export class User implements UserInterface {
     public birthday: string,
     public favoriteCuisine: string,
     public criteria: Criteria[],
-    public createdAt: string,
-    public profilePicture: string | null = null
+    public createdAt: string
   ) {
     this.id = id;
     this.email = email;
@@ -30,6 +27,5 @@ export class User implements UserInterface {
     this.favoriteCuisine = favoriteCuisine;
     this.criteria = criteria;
     this.createdAt = createdAt;
-    this.profilePicture = profilePicture;
   }
 }

@@ -1,5 +1,5 @@
-import { Alert, Keyboard, StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
-import React, { useEffect, useState } from "react";
+import { Keyboard, StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
+import React, { useState } from "react";
 import CustomTextInput from "@/components/CustomTextInput";
 import Colors from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,10 +7,10 @@ import CustomLoadingButton from "@/components/CustomLoadingButton";
 import Font from "@/constants/Font";
 import { useRouter } from "expo-router";
 import { isClerkAPIResponseError, useSignIn } from "@clerk/clerk-expo";
-import CustomButton from "@/components/CustomButton";
 import * as Haptics from "expo-haptics";
 import { Error } from "@/interfaces";
 import { createError, hasError } from "@/common-utils";
+import { TouchableOpacity } from "react-native-gesture-handler";
 
 const signin = () => {
   const router = useRouter();
@@ -20,6 +20,9 @@ const signin = () => {
   const [password, setPassword] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [errorState, setErrorState] = useState<Error[]>([]);
+
+  // const { startOAuthFlow: appleAuth } = useOAuth({ strategy: Strategy.Apple });
+  // const { startOAuthFlow: googleAuth } = useOAuth({ strategy: Strategy.Google });
 
   const validateForm = () => {
     if (!email.includes("@") || !email.includes(".")) {
@@ -72,6 +75,21 @@ const signin = () => {
       setIsSigningIn(false);
     }
   };
+
+  // const onSelectAuth = async (strategy: Strategy) => {
+  //   // const selectedAuth = {
+  //   //   [Strategy.Apple]: appleAuth,
+  //   //   [Strategy.Google]: googleAuth,
+  //   // }[strategy];
+  //   // try {
+  //   //   const { createdSessionId, setActive } = await selectedAuth();
+  //   //   if (createdSessionId) {
+  //   //     setActive!({ session: createdSessionId });
+  //   //   }
+  //   // } catch (e) {
+  //   //   console.log("OAuth error: ", e);
+  //   // }
+  // };
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
       <View style={styles.container}>
@@ -88,20 +106,39 @@ const signin = () => {
             value={email}
             placeholder="Email"
             icon={<Ionicons name="mail-outline" size={24} color={Colors.gray} />}
-            onChange={setEmail}
+            onChange={(text) => {
+              if (hasError(errorState, "invalidUser")) setErrorState([]);
+              setEmail(text);
+            }}
             errors={errorState}
             setErrors={setErrorState}
+            autoFocus
           />
           <CustomTextInput
             name="password"
             value={password}
             placeholder="Password"
             icon={<Ionicons name="lock-closed-outline" size={24} color={Colors.gray} />}
-            onChange={setPassword}
+            onChange={(text) => {
+              if (hasError(errorState, "invalidUser")) setErrorState([]);
+              setPassword(text);
+            }}
             password
             errors={errorState}
             setErrors={setErrorState}
           />
+          <TouchableOpacity onPress={() => router.push("/forgotPassword")}>
+            <Text
+              style={{
+                color: Colors.primary,
+                fontSize: Font.small,
+                marginBottom: 20,
+                fontWeight: "bold",
+              }}
+            >
+              Forgot password?
+            </Text>
+          </TouchableOpacity>
 
           <CustomLoadingButton
             text="Sign in"
@@ -113,7 +150,7 @@ const signin = () => {
           />
         </View>
 
-        <View style={styles.separatorContainer}>
+        {/* <View style={styles.separatorContainer}>
           <View style={styles.separator} />
           <Text style={{ fontFamily: "nm-sb", fontSize: Font.medium, color: Colors.gray }}>or</Text>
           <View style={styles.separator} />
@@ -126,7 +163,7 @@ const signin = () => {
               { backgroundColor: "white", borderWidth: 1, borderColor: Colors.black },
             ]}
             textStyle={[styles.btnText, { color: Colors.black }]}
-            onPress={() => {}}
+            onPress={() => onSelectAuth(Strategy.Apple)}
             icon={<Ionicons name="logo-apple" size={24} color={Colors.black} />}
           />
           <CustomButton
@@ -136,10 +173,10 @@ const signin = () => {
               { backgroundColor: "white", borderWidth: 1, borderColor: Colors.black },
             ]}
             textStyle={[styles.btnText, { color: Colors.black }]}
-            onPress={() => {}}
+            onPress={() => onSelectAuth(Strategy.Google)}
             icon={<Ionicons name="logo-google" size={24} color={Colors.black} />}
           />
-        </View>
+        </View> */}
       </View>
     </TouchableWithoutFeedback>
   );
@@ -155,6 +192,7 @@ const styles = StyleSheet.create({
   btnContainer: {
     borderRadius: 25,
     height: 40,
+    marginTop: 40,
   },
   btnText: {
     fontSize: 18,

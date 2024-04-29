@@ -19,6 +19,7 @@ interface CustomTextInputProps {
   maxLength?: number;
   setErrors?: (error: ErrorType[]) => void;
   disabled?: boolean;
+  autoFocus?: boolean;
 }
 
 const CustomTextInput = ({
@@ -34,6 +35,7 @@ const CustomTextInput = ({
   maxLength,
   setErrors,
   disabled,
+  autoFocus,
 }: CustomTextInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isSecure, setIsSecure] = useState(false);
@@ -51,7 +53,10 @@ const CustomTextInput = ({
   }, [errors]);
 
   const getBorderColor = () => {
-    if (isError && !isFocused) {
+    // if (isError && !isFocused) {
+    //   return Colors.error;
+    // }
+    if (isError) {
       return Colors.error;
     }
     return isFocused ? Colors.primary : Colors.gray;
@@ -81,6 +86,7 @@ const CustomTextInput = ({
             setErrors && errors && setErrors([...errors.filter((e) => e.field !== name)]);
           }}
           editable={!disabled}
+          autoFocus={autoFocus}
         />
         <TouchableWithoutFeedback onPress={() => setIsSecure(!isSecure)}>
           {password && (

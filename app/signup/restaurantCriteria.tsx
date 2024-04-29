@@ -13,7 +13,7 @@ import CustomButton from "@/components/CustomButton";
 import { Criteria } from "@/interfaces";
 
 const INIT_CRITERIA: Criteria[] = [
-  { index: 1, critera: "Food Quality" },
+  { index: 1, critera: "Taste" },
   { index: 2, critera: "Service" },
   { index: 3, critera: "Price" },
   { index: 4, critera: "Overall Experience" },
@@ -77,7 +77,8 @@ const restaurantCriteria = () => {
   return (
     <View style={{ flex: 1, paddingHorizontal: 30 }}>
       <Text style={styles.directions}>
-        Rank what matters most to you when choosing restaurants.
+        Get hands-on with your ranking! Hold and drag to prioritize what truly matters when
+        selecting restaurants.
       </Text>
       <DraggableFlatList
         data={data}

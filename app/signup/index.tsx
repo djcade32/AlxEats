@@ -1,4 +1,4 @@
-import { Keyboard, StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import React, { useState } from "react";
 import Font from "@/constants/Font";
 import CustomTextInput from "@/components/CustomTextInput";
@@ -12,19 +12,14 @@ import { createError } from "@/common-utils";
 import { getDb } from "@/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import useWarmupBrowser from "@/hooks/useWarmupBrowser";
-import { useAuth, useOAuth, useUser } from "@clerk/clerk-expo";
-import { SignInMethods, Strategy } from "@/enums";
-import { useUserStore } from "@/store/userStorage";
-import { useAppStore } from "@/store/app-storage";
 
 const index = () => {
   useWarmupBrowser();
   const router = useRouter();
-  const { updateSignInMethod } = useAppStore();
   const db = getDb();
 
-  const { startOAuthFlow: appleAuth } = useOAuth({ strategy: Strategy.Apple });
-  const { startOAuthFlow: googleAuth } = useOAuth({ strategy: Strategy.Google });
+  // const { startOAuthFlow: appleAuth } = useOAuth({ strategy: Strategy.Apple });
+  // const { startOAuthFlow: googleAuth } = useOAuth({ strategy: Strategy.Google });
 
   const [email, setEmail] = useState("");
   const [errorState, setErrorState] = useState<Error[]>([]);
@@ -66,43 +61,47 @@ const index = () => {
     return emailExists;
   };
 
-  const onSelectAuth = async (strategy: Strategy) => {
-    const selectedAuth = {
-      [Strategy.Apple]: appleAuth,
-      [Strategy.Google]: googleAuth,
-    }[strategy];
-    try {
-      const { createdSessionId, setActive } = await selectedAuth();
-      if (createdSessionId) {
-        setActive!({ session: createdSessionId });
-      }
-    } catch (e) {
-      console.log("OAuth error: ", e);
-    }
-  };
+  // const onSelectAuth = async (strategy: Strategy) => {
+  //   const selectedAuth = {
+  //     [Strategy.Apple]: appleAuth,
+  //     [Strategy.Google]: googleAuth,
+  //   }[strategy];
+  //   try {
+  //     const { createdSessionId, setActive } = await selectedAuth();
+
+  //     if (createdSessionId) {
+  //       setActive!({ session: createdSessionId });
+  //     }
+  //   } catch (e) {
+  //     console.log("OAuth error: ", e);
+  //   }
+  // };
 
   return (
-    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-      <View style={styles.container}>
-        <Text style={styles.directions}>Sign up with one of the provided options</Text>
-        <CustomTextInput
-          name="email"
-          placeholder="Email"
-          icon={<Ionicons name="mail-outline" size={24} color={Colors.gray} />}
-          customStyles={{ marginTop: 35 }}
-          value={email}
-          onChange={setEmail}
-          errors={errorState}
-          setErrors={setErrorState}
-        />
-        <CustomButton
-          text="Continue"
-          buttonStyle={[styles.btnContainer, { backgroundColor: Colors.primary }]}
-          textStyle={[styles.btnText, { color: "white" }]}
-          onPress={handleContinueWithEmail}
-          disabled={!email}
-        />
-        <View style={styles.separatorContainer}>
+    // <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+    <View style={styles.container}>
+      <Text style={styles.directions}>
+        Sign up with your email to start your culinary journey with AlxEats!
+      </Text>
+      <CustomTextInput
+        name="email"
+        placeholder="Email"
+        icon={<Ionicons name="mail-outline" size={24} color={Colors.gray} />}
+        customStyles={{ marginTop: 35 }}
+        value={email}
+        onChange={setEmail}
+        errors={errorState}
+        setErrors={setErrorState}
+        autoFocus
+      />
+      <CustomButton
+        text="Continue"
+        buttonStyle={[styles.btnContainer, { backgroundColor: Colors.primary }]}
+        textStyle={[styles.btnText, { color: "white" }]}
+        onPress={handleContinueWithEmail}
+        disabled={!email}
+      />
+      {/* <View style={styles.separatorContainer}>
           <View style={styles.separator} />
           <Text style={{ fontFamily: "nm-sb", fontSize: Font.medium, color: Colors.gray }}>or</Text>
           <View style={styles.separator} />
@@ -132,9 +131,9 @@ const index = () => {
             updateSignInMethod(SignInMethods.Google);
           }}
           icon={<Ionicons name="logo-google" size={24} color={Colors.black} />}
-        />
-      </View>
-    </TouchableWithoutFeedback>
+        /> */}
+    </View>
+    // </TouchableWithoutFeedback>
   );
 };
 
@@ -165,7 +164,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   btnContainer: {
-    marginTop: 35,
+    marginTop: 50,
     borderRadius: 25,
     paddingVertical: 10,
   },

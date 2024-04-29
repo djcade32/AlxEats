@@ -16,10 +16,10 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import { ScrollView } from "react-native-gesture-handler";
 import FavoriteCuisineBottomSheet from "@/components/FavoriteCuisineBottomSheet";
-import { CreatingUserPayload, Criteria, Error } from "@/interfaces";
+import { Criteria, Error } from "@/interfaces";
 import { createError, hasError } from "@/common-utils";
 import * as Haptics from "expo-haptics";
-import { useAuth, useSignUp, useUser } from "@clerk/clerk-expo";
+import { useAuth, useSignUp } from "@clerk/clerk-expo";
 import Font from "@/constants/Font";
 import { useNavigation } from "@react-navigation/native";
 import CustomHeader from "@/components/CustomHeader";
@@ -28,8 +28,6 @@ import { User } from "@/classes/User";
 import { getDb } from "@/firebase";
 import { doc, setDoc } from "@firebase/firestore";
 import { useUserStore } from "@/store/userStorage";
-import { useAppStore } from "@/store/app-storage";
-import { SignInMethods } from "@/enums";
 
 const keyboardVerticalOffset = Platform.OS === "ios" ? 40 : 0;
 
@@ -39,7 +37,6 @@ const personalInfo = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
   const { userId } = useAuth();
   const { updateIsVerified } = useUserStore();
-  const { signInMethod } = useAppStore();
 
   const paramObj = useLocalSearchParams() as any;
 
@@ -54,7 +51,6 @@ const personalInfo = () => {
   const [errorState, setErrorState] = useState<Error[]>([]);
   const [loading, setLoading] = useState(false);
   const [resendCodeLoading, setResendCodeLoading] = useState(false);
-  const [userCreatedWithOAuth, setUserCreatedWithOAuth] = useState(false);
 
   useEffect(() => {
     if (errorState.length === 0) return;
@@ -92,9 +88,8 @@ const personalInfo = () => {
       console.log("criteria: ", JSON.parse(paramObj.criteria as string));
 
       addUserToFirebase(userObj);
-      if (userCreatedWithOAuth) router.replace("/(authenticated)/(tabs)/home");
     }
-  }, [userId, userCreatedWithOAuth]);
+  }, [userId]);
 
   const handleContinuePressed = async () => {
     try {
@@ -103,16 +98,11 @@ const personalInfo = () => {
         return;
       }
       if (!validateForm()) return;
-      if (signInMethod !== SignInMethods.Email) {
-        setUserCreatedWithOAuth(true);
-        return;
-      }
 
       await signUp.create({
         emailAddress: email,
         password,
       });
-
       // send the email.
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setPendingVerification(true);
@@ -184,7 +174,7 @@ const personalInfo = () => {
         return;
       }
       const completeSignUp = await signUp.attemptEmailAddressVerification({
-        code: verificationCode,
+        code: verificationCode.trim(),
       });
       if (completeSignUp.status !== "complete") {
         /*  investigate the response, to see if there was an error
@@ -197,7 +187,11 @@ const personalInfo = () => {
         router.replace("/(authenticated)/(tabs)/home");
       }
     } catch (err: any) {
-      console.error(JSON.stringify(err, null, 2));
+      // console.error(JSON.stringify(err, null, 2));
+      console.log("err: ", err);
+      err.errors[0].code === "form_code_incorrect"
+        ? Alert.alert("Error", "Incorrect verification code. Please try again.")
+        : Alert.alert("Error", "An error occurred while verifying your email.");
     } finally {
       setLoading(false);
     }
@@ -279,6 +273,9 @@ const personalInfo = () => {
                 paddingBottom: 100,
               }}
             >
+              <Text style={styles.directions}>
+                Let's get to know each other! Share a bit about yourself.
+              </Text>
               <ScrollView contentInset={{ bottom: 10 }} showsVerticalScrollIndicator={false}>
                 <View style={{ height: "65%", gap: 5 }}>
                   <View>
@@ -420,7 +417,7 @@ const styles = StyleSheet.create({
   },
   directions: {
     fontSize: Font.small,
-    marginTop: 45,
+    marginVertical: 20,
     textAlign: "center",
     color: Colors.black,
   },

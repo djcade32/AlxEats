@@ -5,7 +5,6 @@ export interface CreatingUserPayload {
   name: string;
   favoriteCuisine: string;
   criteria?: Criteria[];
-  profilePicture?: string;
 }
 
 export interface Criteria {
