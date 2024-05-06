@@ -9,7 +9,7 @@ import { StatusBar } from "expo-status-bar";
 import CustomHeader from "@/components/CustomHeader";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import { AppRegistry } from "react-native";
 import { initializeFirebase } from "@/firebase";
 import { LinearGradient } from "expo-linear-gradient";
@@ -78,7 +78,8 @@ function InitialLayout() {
 
     const inAuthGroup = segments[0] === "(authenticated)";
     if (isSignedIn && !inAuthGroup) {
-      router.replace("/(authenticated)/(tabs)/home");
+      router.replace("/(authenticated)/(tabs)/(yourLists)");
+      // router.replace("/(authenticated)/(tabs)/home");
     } else if (!isSignedIn) {
       router.replace("/");
     }
@@ -172,7 +173,7 @@ function InitialLayout() {
         }}
       />
 
-      <Stack.Screen name="(authenticated)/(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(authenticated)" options={{ headerShown: false }} />
     </Stack>
   );
 }

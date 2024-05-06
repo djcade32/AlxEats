@@ -20,6 +20,7 @@ interface CustomTextInputProps {
   setErrors?: (error: ErrorType[]) => void;
   disabled?: boolean;
   autoFocus?: boolean;
+  showErrorMessage?: boolean;
 }
 
 const CustomTextInput = ({
@@ -36,6 +37,7 @@ const CustomTextInput = ({
   setErrors,
   disabled,
   autoFocus,
+  showErrorMessage = true,
 }: CustomTextInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isSecure, setIsSecure] = useState(false);
@@ -100,13 +102,15 @@ const CustomTextInput = ({
         </TouchableWithoutFeedback>
       </View>
 
-      <View style={{ minHeight: 20, paddingHorizontal: 5 }}>
-        {isError && errors && hasError(errors, name) && (
-          <Text style={{ fontSize: 12, color: Colors.error, marginTop: 5 }}>
-            {errors.find((e) => e.field === name)?.message}
-          </Text>
-        )}
-      </View>
+      {showErrorMessage && (
+        <View style={{ minHeight: 20, paddingHorizontal: 5 }}>
+          {isError && errors && hasError(errors, name) && (
+            <Text style={{ fontSize: 12, color: Colors.error, marginTop: 5 }}>
+              {errors.find((e) => e.field === name)?.message}
+            </Text>
+          )}
+        </View>
+      )}
     </View>
   );
 };

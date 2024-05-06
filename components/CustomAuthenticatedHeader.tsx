@@ -21,7 +21,7 @@ const CustomAuthenticatedHeader = ({ headerLeft, headerRight }: CustomAuthentica
         source={require("@/assets/images/alxeats-logo-black-text.png")}
         style={styles.alxeatsLogo}
       />
-      <TouchableOpacity style={styles.iconContainer}>{headerRight}</TouchableOpacity>
+      <View>{headerRight}</View>
     </View>
   );
 };
@@ -34,13 +34,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     backgroundColor: "white",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.gray,
     justifyContent: "space-between",
   },
-  iconContainer: {
-    width: 35,
-  },
+
   title: {
     fontSize: Font.medium,
     fontFamily: "nm-b",

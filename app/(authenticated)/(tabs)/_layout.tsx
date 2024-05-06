@@ -1,12 +1,34 @@
 import { Text, View } from "react-native";
-import React from "react";
-import { Tabs } from "expo-router";
+import React, { useEffect } from "react";
+import { Stack, Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import CustomHeader from "@/components/CustomHeader";
 import CustomAuthenticatedHeader from "@/components/CustomAuthenticatedHeader";
+import * as Location from "expo-location";
 
 const Layout = () => {
+  useEffect(() => {
+    getLocationAsync();
+  }, []);
+
+  const getLocationAsync = async () => {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.log("Permission to access location was denied");
+        // You may handle the denial of permission here
+        return;
+      }
+
+      // let location = await Location.getCurrentPositionAsync({});
+      // console.log("Current location:", location.coords);
+      // You may use the current location here
+    } catch (error) {
+      console.error("Error getting location:", error);
+      // You may handle errors related to location access here
+    }
+  };
   return (
     <Tabs
       initialRouteName="home"
@@ -32,32 +54,28 @@ const Layout = () => {
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="(search)"
         options={{
-          title: "Search",
+          headerShown: false,
+          tabBarLabel: "Search",
           tabBarIcon: ({ color, size }) => <Ionicons name="search" size={size} color={color} />,
-          headerTransparent: true,
-          //   headerShown: false,
         }}
       />
       <Tabs.Screen
-        name="yourLists"
+        name="(yourLists)"
         options={{
+          headerShown: false,
           title: "Your Lists",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="list-outline" size={size} color={color} />
           ),
-          headerTransparent: true,
-          //   headerShown: false,
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="currentUser"
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
-          headerTransparent: true,
-          headerShown: false,
         }}
       />
     </Tabs>

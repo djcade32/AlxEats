@@ -50,12 +50,10 @@ const FavoriteCuisineBottomSheet = ({
         style={{ backgroundColor: selectedCuisine === item ? Colors.primary : "white" }}
       >
         <Text
-          style={{
-            textAlign: "center",
-            fontSize: Font.medium,
-            paddingVertical: 10,
-            color: selectedCuisine === item ? "white" : Colors.black,
-          }}
+          style={[
+            styles.renderItemText,
+            { color: selectedCuisine === item ? "white" : Colors.black },
+          ]}
         >
           {item}
         </Text>
@@ -72,14 +70,7 @@ const FavoriteCuisineBottomSheet = ({
       enablePanDownToClose={true}
       onChange={(index) => setBottomSheetOpened(index === 1)}
     >
-      <View
-        style={{
-          alignItems: "center",
-          paddingBottom: 10,
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderColor: Colors.gray,
-        }}
-      >
+      <View style={styles.container}>
         <CustomTextInput
           name="search"
           placeholder="Search cuisine"
@@ -94,16 +85,7 @@ const FavoriteCuisineBottomSheet = ({
         keyExtractor={(i) => i}
         renderItem={(item) => renderItem(item)}
         contentInset={{ bottom: 10 }}
-        ItemSeparatorComponent={() => (
-          <View
-            style={{
-              height: StyleSheet.hairlineWidth,
-              backgroundColor: Colors.gray,
-              width: "80%",
-              alignSelf: "center",
-            }}
-          />
-        )}
+        ItemSeparatorComponent={() => <View style={styles.bottomSheetSeparator} />}
       />
     </BottomSheet>
   );
@@ -111,4 +93,24 @@ const FavoriteCuisineBottomSheet = ({
 
 export default FavoriteCuisineBottomSheet;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+    paddingBottom: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.gray,
+  },
+
+  renderItemText: {
+    textAlign: "center",
+    fontSize: Font.medium,
+    paddingVertical: 10,
+  },
+
+  bottomSheetSeparator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: Colors.gray,
+    width: "80%",
+    alignSelf: "center",
+  },
+});
