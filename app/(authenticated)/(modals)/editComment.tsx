@@ -7,14 +7,12 @@ import {
   View,
   ScrollView,
   TextInput,
-  KeyboardAvoidingView,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import Colors from "@/constants/Colors";
 import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Font from "@/constants/Font";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 const DummyText =
   "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";

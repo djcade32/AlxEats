@@ -10,6 +10,14 @@ const _layout = () => {
         name="restaurantDetails/[id]"
         options={{ headerShown: true, headerTransparent: true }}
       />
+      <Stack.Screen
+        name="(modals)/Filter/index"
+        options={{ headerShown: true, headerTransparent: true, presentation: "fullScreenModal" }}
+      />
+      <Stack.Screen
+        name="(modals)/Filter/cuisinesFilter"
+        options={{ headerShown: true, headerTransparent: true, presentation: "modal" }}
+      />
       <Stack.Screen name="(modals)/editComment" />
     </Stack>
   );

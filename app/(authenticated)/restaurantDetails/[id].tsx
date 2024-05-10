@@ -59,7 +59,7 @@ const restaurantDetails = () => {
       <View style={{ height: "40%" }}>
         <MapView
           style={StyleSheet.absoluteFill}
-          provider={PROVIDER_GOOGLE}
+          // provider={PROVIDER_GOOGLE}
           initialRegion={{
             latitude: restaurantObj?.lat + 0.001 || 38.8462,
             longitude: restaurantObj?.lon || -77.3064,

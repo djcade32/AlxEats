@@ -66,7 +66,7 @@ const ListingsBottomSheet = ({
         contentContainerStyle={contentContainerStyle}
         ListHeaderComponent={ListHeaderComponent}
       />
-      {mapButtonSeen && <MapButton onPress={showMap} />}
+      {/* {mapButtonSeen && <MapButton onPress={showMap} />} */}
     </BottomSheet>
   );
 };

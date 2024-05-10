@@ -4,7 +4,7 @@ import Switch from "./Switch";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import CustomTextInput from "./CustomTextInput";
-import { Stack } from "expo-router";
+import { Stack, router, useRouter } from "expo-router";
 
 interface ListingsScreenHeaderProps {
   searchText: string;
@@ -12,6 +12,7 @@ interface ListingsScreenHeaderProps {
   activeToggle: number;
   setActiveToggle: (viewMembers: number) => void;
   switchValues: { label: string; icon: string }[];
+  showFilter?: boolean;
 }
 
 const ListingsScreenHeader = ({
@@ -20,7 +21,9 @@ const ListingsScreenHeader = ({
   activeToggle,
   setActiveToggle,
   switchValues,
+  showFilter = true,
 }: ListingsScreenHeaderProps) => {
+  const router = useRouter();
   return (
     <Stack.Screen
       options={{
@@ -36,9 +39,14 @@ const ListingsScreenHeader = ({
                 }}
               >
                 <Switch setToggleActive={setActiveToggle} values={switchValues} />
-                <TouchableOpacity style={styles.filterIconContainer}>
-                  <Ionicons name="filter-outline" size={22} color={Colors.primary} />
-                </TouchableOpacity>
+                {showFilter && (
+                  <TouchableOpacity
+                    style={styles.filterIconContainer}
+                    onPress={() => router.push("/(authenticated)/(modals)/Filter/")}
+                  >
+                    <Ionicons name="filter-outline" size={22} color={Colors.primary} />
+                  </TouchableOpacity>
+                )}
               </View>
 
               {/* Search Input */}

@@ -33,7 +33,7 @@ const ListingsMap = memo(({ data }: ListingsMapProps) => {
       <MapView
         animationEnabled={false}
         style={StyleSheet.absoluteFill}
-        provider={PROVIDER_GOOGLE}
+        // provider={PROVIDER_GOOGLE}
         showsUserLocation={true}
         clusterColor={Colors.black}
         clusterTextColor="white"

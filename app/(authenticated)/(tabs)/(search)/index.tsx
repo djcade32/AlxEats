@@ -47,6 +47,7 @@ const search = () => {
           { label: "Restaurants", icon: "storefront" },
           { label: "Members", icon: "person" },
         ]}
+        showFilter={!viewMembers}
       />
       <ListingsMap data={RESTAURANT_DATA} />
       <ListingsBottomSheet

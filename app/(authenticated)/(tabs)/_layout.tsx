@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 import React, { useEffect } from "react";
 import { Stack, Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -48,7 +48,11 @@ const Layout = () => {
           tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
           header: () => (
             <CustomAuthenticatedHeader
-              headerRight={<Ionicons name="notifications-outline" size={22} color={Colors.black} />}
+              headerRight={
+                <TouchableOpacity>
+                  <Ionicons name="notifications-outline" size={22} color={Colors.black} />
+                </TouchableOpacity>
+              }
             />
           ),
         }}
@@ -71,6 +75,7 @@ const Layout = () => {
           ),
         }}
       />
+
       <Tabs.Screen
         name="currentUser"
         options={{

@@ -68,7 +68,7 @@ const CustomTextInput = ({
     onChange && onChange(text);
   };
   return (
-    <View>
+    <View style={{ flex: 1 }}>
       <View style={[styles.container, { borderColor: getBorderColor() }, customStyles]}>
         {icon}
         <TextInput
@@ -127,6 +127,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     paddingLeft: 10,
+    flex: 1,
   },
   textInput: {
     flex: 1,

@@ -59,7 +59,7 @@ function InitialLayout() {
     nycd: require("../assets/fonts/NothingYouCouldDo-Regular.ttf"),
   });
   const router = useRouter();
-  const { isLoaded, isSignedIn } = useAuth();
+  // const { isLoaded, isSignedIn } = useAuth();
   const segments = useSegments();
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
@@ -74,28 +74,40 @@ function InitialLayout() {
   }, [loaded]);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    // if (!loaded) return;
+    router.replace("/(authenticated)/(tabs)/home");
 
-    const inAuthGroup = segments[0] === "(authenticated)";
-    if (isSignedIn && !inAuthGroup) {
-      router.replace("/(authenticated)/(tabs)/(yourLists)");
-      // router.replace("/(authenticated)/(tabs)/home");
-    } else if (!isSignedIn) {
-      router.replace("/");
-    }
-  }, [isSignedIn]);
+    // const inAuthGroup = segments[0] === "(authenticated)";
+    // if (isSignedIn && !inAuthGroup) {
+    //   router.replace("/(authenticated)/(modals)/Filter/");
+    //   // router.replace("/(authenticated)/(tabs)/home");
+    // } else if (!isSignedIn) {
+    //   router.replace("/");
+    // }
+  }, []);
+  // useEffect(() => {
+  //   if (!isLoaded) return;
 
-  if (!loaded || !isLoaded) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <LinearGradient
-          colors={[Colors.primary, "#051822"]}
-          style={{ position: "absolute", left: 0, right: 0, top: 0, height: "100%" }}
-        />
-        <ActivityIndicator size="large" color={"white"} />
-      </View>
-    );
-  }
+  //   const inAuthGroup = segments[0] === "(authenticated)";
+  //   if (isSignedIn && !inAuthGroup) {
+  //     router.replace("/(authenticated)/(modals)/Filter/");
+  //     // router.replace("/(authenticated)/(tabs)/home");
+  //   } else if (!isSignedIn) {
+  //     router.replace("/");
+  //   }
+  // }, [isSignedIn]);
+
+  // if (!loaded || !isLoaded) {
+  //   return (
+  //     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+  //       <LinearGradient
+  //         colors={[Colors.primary, "#051822"]}
+  //         style={{ position: "absolute", left: 0, right: 0, top: 0, height: "100%" }}
+  //       />
+  //       <ActivityIndicator size="large" color={"white"} />
+  //     </View>
+  //   );
+  // }
 
   return (
     <Stack>
@@ -180,12 +192,12 @@ function InitialLayout() {
 
 const RootLayoutNav = () => {
   return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY!} tokenCache={tokenCache}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <StatusBar style="light" />
-        <InitialLayout />
-      </GestureHandlerRootView>
-    </ClerkProvider>
+    // <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY!} tokenCache={tokenCache}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <StatusBar style="light" />
+      <InitialLayout />
+    </GestureHandlerRootView>
+    // </ClerkProvider>
   );
 };
 AppRegistry.registerComponent("alxeats", () => InitialLayout);

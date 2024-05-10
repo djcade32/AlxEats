@@ -35,20 +35,22 @@ const ListingsRestaurantItem = ({ restaurant, ranking = false }: any) => {
           </Text>
         </View>
       </TouchableOpacity>
-      {ranking ? (
-        <View style={styles.rankingCircle}>
-          <Text style={styles.rankingText}>{restaurant.restaurantRanking}</Text>
-        </View>
-      ) : (
-        <View style={styles.actionButtons}>
-          <TouchableOpacity>
-            <Ionicons name="add-circle-outline" size={30} color={Colors.black} />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Ionicons name="bookmark-outline" size={30} color={Colors.black} />
-          </TouchableOpacity>
-        </View>
-      )}
+      <View style={{ height: 45 }}>
+        {ranking ? (
+          <View style={styles.rankingCircle}>
+            <Text style={styles.rankingText}>{restaurant.restaurantRanking}</Text>
+          </View>
+        ) : (
+          <View style={styles.actionButtons}>
+            <TouchableOpacity>
+              <Ionicons name="add-circle-outline" size={30} color={Colors.black} />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Ionicons name="bookmark-outline" size={30} color={Colors.black} />
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
     </View>
   );
 };
@@ -84,6 +86,7 @@ const styles = StyleSheet.create({
     gap: 8,
     flex: 1,
     justifyContent: "flex-end",
+    alignItems: "center",
   },
 
   pressableContainer: {
