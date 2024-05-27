@@ -1,10 +1,18 @@
-import { StyleSheet, Text, View, SafeAreaView, TouchableOpacity } from "react-native";
-import React, { useState } from "react";
+import { StyleSheet, Text, View, SafeAreaView, TouchableOpacity, Alert } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
 import Switch from "./Switch";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import CustomTextInput from "./CustomTextInput";
 import { Stack, router, useRouter } from "expo-router";
+import {
+  GooglePlacesAutocomplete,
+  GooglePlacesAutocompleteRef,
+} from "react-native-google-places-autocomplete";
+import Geolocation from "@react-native-community/geolocation";
+import { types } from "@babel/core";
+
+const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
 interface ListingsScreenHeaderProps {
   searchText: string;
@@ -23,7 +31,19 @@ const ListingsScreenHeader = ({
   switchValues,
   showFilter = true,
 }: ListingsScreenHeaderProps) => {
+  const ref = useRef<any>();
   const router = useRouter();
+  const [location, setLocation] = useState<any>(null);
+  Geolocation.setRNConfiguration({
+    skipPermissionRequests: false,
+    authorizationLevel: "auto",
+    enableBackgroundLocationUpdates: true,
+    locationProvider: "auto",
+  });
+  const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+
+  Geolocation.getCurrentPosition((info) => {});
+
   return (
     <Stack.Screen
       options={{
@@ -64,6 +84,23 @@ const ListingsScreenHeader = ({
                 showErrorMessage={false}
               />
             </View>
+            {/* <View style={{ zIndex: 1, borderWidth: 1, height: 400 }}>
+              <GooglePlacesAutocomplete
+                ref={ref}
+                placeholder="Search"
+                onPress={(data, details = null) => {
+                  // 'details' is provided when fetchDetails = true
+                  console.log(data, details);
+                }}
+                query={{
+                  key: GOOGLE_PLACES_API_KEY,
+                  language: "en",
+                }}
+                currentLocationLabel="Current location"
+                fetchDetails={true}
+                onFail={(error) => console.error(error)}
+              />
+            </View> */}
           </SafeAreaView>
         ),
       }}

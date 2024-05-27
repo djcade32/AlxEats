@@ -4,13 +4,14 @@ import Colors from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Font from "@/constants/Font";
+import { RestaurantItem } from "@/interfaces";
 
 interface ListingsRestaurantItemProps {
-  restaurant: any;
+  restaurant: RestaurantItem;
   ranking?: boolean;
 }
 
-const ListingsRestaurantItem = ({ restaurant, ranking = false }: any) => {
+const ListingsRestaurantItem = ({ restaurant, ranking = false }: ListingsRestaurantItemProps) => {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const TEXT_AVAILABLE_WIDTH = width - 130;
@@ -26,10 +27,10 @@ const ListingsRestaurantItem = ({ restaurant, ranking = false }: any) => {
       >
         <Ionicons name="pin" size={30} color={Colors.primary} />
 
-        <View style={{ gap: 5 }}>
-          <View>
-            <Text style={styles.restaurantName}>{restaurant.restaurantName}</Text>
-          </View>
+        <View style={{ gap: 5, flex: 1 }}>
+          <Text style={styles.restaurantName} numberOfLines={1} ellipsizeMode="tail">
+            {restaurant.name}
+          </Text>
           <Text style={[styles.address, { width: TEXT_AVAILABLE_WIDTH }]} numberOfLines={1}>
             {restaurant.address}
           </Text>
@@ -38,7 +39,7 @@ const ListingsRestaurantItem = ({ restaurant, ranking = false }: any) => {
       <View style={{ height: 45 }}>
         {ranking ? (
           <View style={styles.rankingCircle}>
-            <Text style={styles.rankingText}>{restaurant.restaurantRanking}</Text>
+            <Text style={styles.rankingText}>{8.0}</Text>
           </View>
         ) : (
           <View style={styles.actionButtons}>
@@ -93,6 +94,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     alignItems: "center",
+    flex: 1,
   },
 
   rankingCircle: {

@@ -28,3 +28,23 @@ export async function checkIfUserExistsInDB(id: string | undefined) {
 
   return querySnapshot.docs.length > 0;
 }
+
+function isArrayOfStrings(arr: any) {
+  return Array.isArray(arr) && arr.every((item) => typeof item === "string");
+}
+
+function isCoordinate(obj: any) {
+  return obj && typeof obj.latitude === "number" && typeof obj.longitude === "number";
+}
+
+export function isRestaurantItem(obj: any) {
+  return (
+    obj &&
+    typeof obj.address === "string" &&
+    isCoordinate(obj.coordinate) &&
+    typeof obj.openNow === "boolean" &&
+    typeof obj.price === "number" &&
+    typeof obj.name === "string" &&
+    isArrayOfStrings(obj.types)
+  );
+}

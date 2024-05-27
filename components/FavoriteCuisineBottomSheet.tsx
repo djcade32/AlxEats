@@ -77,7 +77,8 @@ const FavoriteCuisineBottomSheet = ({
           icon={<Ionicons name="search" size={24} color={Colors.gray} />}
           value={searchText}
           onChange={setSearchText}
-          customStyles={{ width: "75%" }}
+          customStyles={{ width: "100%" }}
+          showErrorMessage={false}
         />
       </View>
       <BottomSheetFlatList
@@ -97,6 +98,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     paddingBottom: 10,
+    paddingHorizontal: 30,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.gray,
   },

@@ -13,40 +13,33 @@ import CustomButton from "@/components/CustomButton";
 import { Criteria } from "@/interfaces";
 
 const INIT_CRITERIA: Criteria[] = [
-  { index: 1, critera: "Taste" },
-  { index: 2, critera: "Service" },
-  { index: 3, critera: "Price" },
-  { index: 4, critera: "Overall Experience" },
-  { index: 5, critera: "Atmosphere" },
+  { index: 1, criteria: "Taste" },
+  { index: 2, criteria: "Service" },
+  { index: 3, criteria: "Price" },
+  { index: 4, criteria: "Overall Experience" },
+  { index: 5, criteria: "Atmosphere" },
 ];
 
 const restaurantCriteria = () => {
   const router = useRouter();
-  const { emailParam } = useLocalSearchParams() as {
-    emailParam: string;
-  };
+  const paramObj = useLocalSearchParams() as any;
 
-  const [data, setData] = useState(INIT_CRITERIA);
+  const [data, setData] = useState<Criteria[]>(INIT_CRITERIA);
 
   // This function is called when the user finishes dragging the list. It updates the index of each item in the list.
   const handleDragEnd = (oldData: Criteria[]) => {
     const newData: Criteria[] = [];
     oldData.forEach((item, index) => {
-      newData.push({ index: index + 1, critera: item.critera });
+      newData.push({ index: index + 1, criteria: item.criteria });
     });
 
     setData(newData);
   };
 
   const handleContinuePressed = async () => {
-    const user = {
-      email: emailParam,
-      criteria: JSON.stringify(data),
-    };
-
     router.push({
-      pathname: "/signup/personalInfo",
-      params: user as any,
+      pathname: "(onboarding)/getStarted",
+      params: { ...paramObj, criteria: JSON.stringify(data) },
     });
   };
 
@@ -55,27 +48,22 @@ const restaurantCriteria = () => {
       <ScaleDecorator activeScale={0.75}>
         <TouchableOpacity
           onLongPress={drag}
-          style={{
-            padding: 20,
-            backgroundColor: isActive ? Colors.secondary : Colors.primary,
-            borderWidth: 0.5,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderRadius: 10,
-            borderColor: Colors.gray,
-          }}
+          style={[
+            styles.itemContainer,
+            { backgroundColor: isActive ? Colors.secondary : Colors.primary },
+          ]}
         >
           <Text
             style={{ fontSize: Font.medium, color: "white" }}
-          >{`${item.index}. ${item.critera}`}</Text>
+          >{`${item.index}. ${item.criteria}`}</Text>
           <Ionicons name="menu-outline" size={24} color={"white"} />
         </TouchableOpacity>
       </ScaleDecorator>
     );
   }, []);
+
   return (
-    <View style={{ flex: 1, paddingHorizontal: 30 }}>
+    <View style={styles.container}>
       <Text style={styles.directions}>
         Get hands-on with your ranking! Hold and drag to prioritize what truly matters when
         selecting restaurants.
@@ -85,9 +73,10 @@ const restaurantCriteria = () => {
         onDragEnd={({ data }) => handleDragEnd(data)}
         keyExtractor={(item) => item.index.toString()}
         renderItem={renderItem}
-        contentContainerStyle={{ gap: 20, paddingBottom: 50 }}
-        style={{ paddingHorizontal: 15, marginTop: 40 }}
+        contentContainerStyle={{ gap: 20 }}
+        style={{ paddingHorizontal: 15 }}
       />
+      <View style={{ flex: 1 }} />
       <CustomButton
         text="Continue"
         buttonStyle={[styles.btnContainer, { backgroundColor: Colors.primary }]}
@@ -101,9 +90,14 @@ const restaurantCriteria = () => {
 export default restaurantCriteria;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 30,
+    paddingBottom: 100,
+  },
   directions: {
     fontSize: Font.small,
-    marginTop: 45,
+    marginVertical: 20,
     textAlign: "center",
     color: Colors.black,
   },
@@ -114,5 +108,15 @@ const styles = StyleSheet.create({
   },
   btnText: {
     fontSize: 18,
+  },
+
+  itemContainer: {
+    padding: 20,
+    borderWidth: 0.5,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderRadius: 10,
+    borderColor: Colors.gray,
   },
 });

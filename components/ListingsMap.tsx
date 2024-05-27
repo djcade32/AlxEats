@@ -6,6 +6,8 @@ import Colors from "@/constants/Colors";
 import * as Location from "expo-location";
 import { mapStyle } from "@/customMapStyle";
 import { router } from "expo-router";
+import { RestaurantItem } from "@/interfaces";
+import { isRestaurantItem } from "@/common-utils";
 
 interface ListingsMapProps {
   data: any;
@@ -14,7 +16,6 @@ interface ListingsMapProps {
 const ListingsMap = memo(({ data }: ListingsMapProps) => {
   const [userLocation, setUserLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [loaded, setLoaded] = useState(false);
-
   useEffect(() => {
     (async () => {
       let location = await Location.getCurrentPositionAsync({});
@@ -22,6 +23,14 @@ const ListingsMap = memo(({ data }: ListingsMapProps) => {
       setLoaded(true);
     })();
   }, []);
+
+  // useEffect(() => {
+  //   console.log("data changed");
+  //   if (!isRestaurantItem(data[0])) {
+  //     console.log("data is not a restaurant item");
+  //     setLoaded(false);
+  //   }
+  // }, [data]);
 
   const onMarkerPress = (item: any) => {
     router.push(`/restaurantDetails/${JSON.stringify(item)}`);
@@ -33,7 +42,7 @@ const ListingsMap = memo(({ data }: ListingsMapProps) => {
       <MapView
         animationEnabled={false}
         style={StyleSheet.absoluteFill}
-        // provider={PROVIDER_GOOGLE}
+        provider={PROVIDER_GOOGLE}
         showsUserLocation={true}
         clusterColor={Colors.black}
         clusterTextColor="white"
@@ -46,21 +55,24 @@ const ListingsMap = memo(({ data }: ListingsMapProps) => {
         customMapStyle={mapStyle}
         pitchEnabled={false}
       >
-        {data.map((listing: any) => (
-          <Marker
-            key={listing.address}
-            onPress={() => onMarkerPress(listing)}
-            coordinate={{
-              latitude: +listing.lat,
-              longitude: +listing.lon,
-            }}
-          >
-            <Image
-              source={require("@/assets/images/location-pin.png")}
-              style={{ width: 35, height: 35 }}
-            />
-          </Marker>
-        ))}
+        {data.map(
+          (listing: RestaurantItem) =>
+            listing?.coordinate && (
+              <Marker
+                key={listing.address}
+                onPress={() => onMarkerPress(listing)}
+                coordinate={{
+                  latitude: +listing.coordinate.latitude,
+                  longitude: +listing.coordinate.longitude,
+                }}
+              >
+                <Image
+                  source={require("@/assets/images/location-pin.png")}
+                  style={{ width: 35, height: 35 }}
+                />
+              </Marker>
+            )
+        )}
       </MapView>
     </View>
   );

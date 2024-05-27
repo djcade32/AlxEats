@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, TouchableOpacity, Image, FlatList } from "react-native";
 import React from "react";
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import CustomAuthenticatedHeader from "@/components/CustomAuthenticatedHeader";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
@@ -96,7 +96,7 @@ const currentUser = () => {
                   <TouchableOpacity>
                     <Ionicons name="notifications-outline" size={22} color={Colors.black} />
                   </TouchableOpacity>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => router.push("/settings")}>
                     <Ionicons name="settings-outline" size={22} color={Colors.black} />
                   </TouchableOpacity>
                 </View>

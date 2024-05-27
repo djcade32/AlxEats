@@ -7,6 +7,8 @@ import { SignInMethods } from "@/enums";
 export interface AppState {
   signInMethod: SignInMethods;
   updateSignInMethod: (method: SignInMethods) => void;
+  pendingEmailVerification: boolean;
+  setPendingEmailVerification: (pending: boolean) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -15,6 +17,10 @@ export const useAppStore = create<AppState>()(
       signInMethod: SignInMethods.Email,
       updateSignInMethod: (method: SignInMethods) => {
         set({ signInMethod: method });
+      },
+      pendingEmailVerification: false,
+      setPendingEmailVerification: (pending: boolean) => {
+        set({ pendingEmailVerification: pending });
       },
     }),
 

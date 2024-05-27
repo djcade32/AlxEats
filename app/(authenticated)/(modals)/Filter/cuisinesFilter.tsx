@@ -82,6 +82,7 @@ const cuisinesFilter = () => {
             value={searchText}
             onChange={setSearchText}
             customStyles={styles.searchInput}
+            style={{ flex: 1 }}
             showErrorMessage={false}
           />
           <View style={styles.headerIconContainer}>
