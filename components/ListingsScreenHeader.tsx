@@ -82,25 +82,9 @@ const ListingsScreenHeader = ({
                 onChange={setSearchText}
                 customStyles={styles.searchInput}
                 showErrorMessage={false}
+                clearButtonMode="while-editing"
               />
             </View>
-            {/* <View style={{ zIndex: 1, borderWidth: 1, height: 400 }}>
-              <GooglePlacesAutocomplete
-                ref={ref}
-                placeholder="Search"
-                onPress={(data, details = null) => {
-                  // 'details' is provided when fetchDetails = true
-                  console.log(data, details);
-                }}
-                query={{
-                  key: GOOGLE_PLACES_API_KEY,
-                  language: "en",
-                }}
-                currentLocationLabel="Current location"
-                fetchDetails={true}
-                onFail={(error) => console.error(error)}
-              />
-            </View> */}
           </SafeAreaView>
         ),
       }}

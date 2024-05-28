@@ -20,7 +20,7 @@ const ListingsRestaurantItem = ({ restaurant, ranking = false }: ListingsRestaur
     router.push(`/restaurantDetails/${JSON.stringify(item)}`);
   };
   return (
-    <View style={styles.container}>
+    <View style={styles.container} key={restaurant.placeId}>
       <TouchableOpacity
         style={styles.pressableContainer}
         onPress={() => handleRestaurantPress(restaurant)}

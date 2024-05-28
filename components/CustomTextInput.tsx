@@ -23,6 +23,7 @@ interface CustomTextInputProps {
   showErrorMessage?: boolean;
   style?: StyleProp<ViewStyle>;
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
+  clearButtonMode?: "never" | "while-editing" | "unless-editing" | "always";
 }
 
 const CustomTextInput = ({
@@ -42,6 +43,7 @@ const CustomTextInput = ({
   showErrorMessage = true,
   style,
   autoCapitalize,
+  clearButtonMode,
 }: CustomTextInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isSecure, setIsSecure] = useState(false);
@@ -94,6 +96,7 @@ const CustomTextInput = ({
           editable={!disabled}
           autoFocus={autoFocus}
           autoCapitalize={autoCapitalize}
+          clearButtonMode={clearButtonMode}
         />
         <TouchableWithoutFeedback onPress={() => setIsSecure(!isSecure)}>
           {password && (

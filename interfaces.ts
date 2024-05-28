@@ -28,6 +28,7 @@ export interface Error {
 }
 
 export interface RestaurantItem {
+  placeId: number;
   address: string;
   coordinate: Coordinate;
   openNow: boolean;
