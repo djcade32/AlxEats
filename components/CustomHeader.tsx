@@ -4,14 +4,17 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import Font from "@/constants/Font";
 import { useRouter } from "expo-router";
+import Colors from "@/constants/Colors";
+import LoadingText from "./LoadingText";
 
 interface CustomHeaderProps {
   title: string;
   headerLeft?: React.ReactNode;
   headerRight?: React.ReactNode;
+  loading?: boolean;
 }
 
-const CustomHeader = ({ title, headerLeft, headerRight }: CustomHeaderProps) => {
+const CustomHeader = ({ title, headerLeft, headerRight, loading = false }: CustomHeaderProps) => {
   const { top } = useSafeAreaInsets();
   const router = useRouter();
 
@@ -20,7 +23,14 @@ const CustomHeader = ({ title, headerLeft, headerRight }: CustomHeaderProps) => 
       <TouchableOpacity onPress={() => router.back()} style={styles.iconContainer}>
         {headerLeft}
       </TouchableOpacity>
-      <Text style={styles.title}>{title}</Text>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <LoadingText
+          title={title}
+          loading={loading}
+          textStyle={styles.title}
+          containerStyle={{ height: 25, width: 150, borderRadius: 15 }}
+        />
+      </View>
       <TouchableOpacity style={styles.iconContainer}>{headerRight}</TouchableOpacity>
     </View>
   );
@@ -43,6 +53,6 @@ const styles = StyleSheet.create({
     fontSize: Font.medium,
     fontFamily: "nm-b",
     textAlign: "center",
-    flex: 1,
+    // flex: 1,
   },
 });

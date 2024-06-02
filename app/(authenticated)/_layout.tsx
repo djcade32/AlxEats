@@ -1,37 +1,62 @@
 import React, { useEffect, useState } from "react";
 import { Stack, useRouter } from "expo-router";
 import { getAuth } from "firebase/auth";
-import { getDb } from "@/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { checkIfEmailExists, getDb, getUserRestaurantsToTryList } from "@/firebase";
+import { collection, getDocs, onSnapshot, query, where } from "firebase/firestore";
 import CustomHeader from "@/components/CustomHeader";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
+import Font from "@/constants/Font";
+import { TouchableOpacity } from "react-native";
+import { useAppStore } from "@/store/app-storage";
 
 const _layout = () => {
-  const router = useRouter();
-  const db = getDb();
+  const {
+    userDbInfo,
+    setAuthUser,
+    setUserDbInfo,
+    setUserToTryRestaurants,
+    setUserTriedRestaurants,
+  } = useAppStore();
   const [isLoading, setIsLoading] = useState(false);
 
+  // useEffect(() => {
+  //   if (isLoading) return;
+  //   setIsLoading(true);
+  //   (async () => {
+  //     if (userDbInfo) {
+  //       setUserToTryRestaurants(await getUserRestaurantsToTryList(userDbInfo.id));
+  //       console.log("User to try restaurants retrieved");
+  //     }
+  //   })();
+  // }, []);
+
   useEffect(() => {
-    if (isLoading) return;
-    setIsLoading(true);
-    checkIfEmailExists()
-      .then((exists) =>
-        exists ? router.replace("/(authenticated)/home") : router.replace("(onboarding)/")
-      )
-      .finally(() => setIsLoading(false));
+    let db = getDb();
+    const q = query(collection(db!, `userRestaurants/${userDbInfo?.id}/toTry`));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        setUserToTryRestaurants(change.doc.data().data);
+        console.log("User to try restaurants retrieved");
+      });
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const checkIfEmailExists = async (): Promise<boolean> => {
-    let emailExists = false;
-    const email = getAuth().currentUser?.email;
-    if (!db || !email) return emailExists;
-    const q = query(collection(db, "users"), where("email", "==", email.toLowerCase()));
-    const querySnapshot = await getDocs(q);
+  useEffect(() => {
+    let db = getDb();
+    const q = query(collection(db!, `userRestaurants/${userDbInfo?.id}/tried`));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        setUserTriedRestaurants(change.doc.data().data);
+        console.log("User tried restaurants retrieved");
+      });
+    });
 
-    emailExists = querySnapshot.docs.length > 0;
-    return emailExists;
-  };
+    return () => unsubscribe();
+  }, []);
+
   return (
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -48,7 +73,27 @@ const _layout = () => {
         options={{ headerShown: true, headerTransparent: true, presentation: "modal" }}
       />
       <Stack.Screen name="settings" options={{ headerShown: true, headerTransparent: true }} />
-      <Stack.Screen name="(modals)/editComment" />
+      <Stack.Screen
+        name="(modals)/editComment"
+        options={{ presentation: "modal", gestureEnabled: false }}
+      />
+      <Stack.Screen
+        name="(modals)/RankRestaurant/index"
+        options={{
+          presentation: "modal",
+          headerTransparent: true,
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="(modals)/RankRestaurant/selectedPhotos"
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          presentation: "modal",
+          gestureEnabled: false,
+        }}
+      />
       <Stack.Screen
         name="(onboarding)/index"
         options={{

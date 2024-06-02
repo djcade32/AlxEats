@@ -12,7 +12,7 @@ import { createError, hasError } from "@/common-utils";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import EmailVerificationModal from "@/components/EmailVerificationModal";
 import { useAppStore } from "@/store/app-storage";
-import { sendEmailVerification, signIn } from "@/firebase";
+import { checkIfEmailExists, sendEmailVerification, signIn } from "@/firebase";
 import { FirebaseError } from "firebase/app";
 
 const signin = () => {
@@ -41,7 +41,15 @@ const signin = () => {
     setIsSigningIn(true);
 
     try {
-      await signIn(email, password);
+      const authUser = await signIn(email, password);
+      if (!authUser.user.emailVerified) {
+        console.log("email not verified");
+        sendEmailVerification().then(() => setPendingEmailVerification(true));
+        return;
+      }
+      checkIfEmailExists().then((exists) =>
+        exists ? router.replace("/(authenticated)/home") : router.replace("(onboarding)/")
+      );
       console.log("signed in");
     } catch (error: any) {
       const err: FirebaseError = error;
@@ -56,6 +64,8 @@ const signin = () => {
       console.log("error", err.code);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
+      setEmail("");
+      setPassword("");
       setIsSigningIn(false);
     }
   };
@@ -123,8 +133,8 @@ const signin = () => {
         <EmailVerificationModal
           isModalVisible={pendingEmailVerification}
           toggleModal={() => setPendingEmailVerification(false)}
-          title="Email verification sent!"
-          body="Check your email for a verification link."
+          title="Please verify email"
+          body="Email verification sent! Please check your email to verify your account."
           onResend={() => {
             setPendingEmailVerification(false);
             setSendingEmailVerification(true);

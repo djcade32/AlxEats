@@ -1,35 +1,45 @@
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
-import ListingsBottomSheet from "@/components/ListingsBottomSheet";
-import ListingsMap from "@/components/ListingsMap";
 import ListingsScreenHeader from "@/components/ListingsScreenHeader";
-import { postData as USER_DATA } from "@/assets/data/dummyData";
 import ListingsMemberItem from "@/components/ListingsMemberItem";
 import ListingsRestaurantItem from "@/components/ListingsRestaurantItem";
 import { useRouter } from "expo-router";
-import Geolocation from "@react-native-community/geolocation";
-import { Coordinate, RestaurantItem } from "@/interfaces";
+import { FetchUsersPayload, RestaurantItem } from "@/interfaces";
 import * as Location from "expo-location";
 import { FlatList } from "react-native-gesture-handler";
 import Colors from "@/constants/Colors";
 import Font from "@/constants/Font";
+import { fetchUsers } from "@/firebase";
+import { getAuth } from "firebase/auth";
+import { distanceBetweenCoordinates } from "@/common-utils";
+import { useAppStore } from "@/store/app-storage";
+
+//TODO: What you could do is create to FlatLists, one for members and one for restaurants and
+//show/hide them based on the viewMembers state
 
 const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
 const search = () => {
   const router = useRouter();
-  const flatListRef = useRef<FlatList>(null);
+  const debounceTimeout = useRef<any>(null);
+  const { authUser } = useAppStore();
 
   const [searchText, setSearchText] = useState("");
   const [viewMembers, setViewMembers] = useState(0);
   const [data, setData] = useState<any>([]);
+  const [allUsersPagination, setAllUsersPagination] = useState<FetchUsersPayload | null>(null);
   const [filteredData, setFilteredData] = useState<any>([]);
-  const [location, setLocation] = useState<Coordinate | null>(null);
   const [loading, setLoading] = useState(true);
   const [pageToken, setPageToken] = useState<string | null>(null);
-  const debounceTimeout = useRef<any>(null);
   const [flatListHeight, setFlatListHeight] = useState(0);
-  const [dataHeight, setDataHeight] = useState(0);
+  const [fetchingMoreRestaurants, setFetchingMoreRestaurants] = useState(true);
+
+  useEffect(() => {
+    // Fetch all users
+    fetchUsers().then((users) => {
+      setAllUsersPagination(users);
+    });
+  }, []);
 
   // TODO: Right now the only way to update user's current location is to switch to Members and
   // switch back to Restaurants. This is a temporary solution until we find a better way to update
@@ -37,19 +47,19 @@ const search = () => {
     setLoading(true);
     setPageToken(null);
     setSearchText("");
-    setPageToken(null);
 
     const isViewingMembers = !!viewMembers;
 
     if (!isViewingMembers) {
       fetchRestaurants();
     } else {
-      setData(USER_DATA);
-      setFilteredData(USER_DATA);
+      setData(allUsersPagination?.data || []);
+      setFilteredData(allUsersPagination?.data || []);
       setLoading(false);
     }
   }, [viewMembers]);
 
+  // Update search results when search text changes
   useEffect(() => {
     if (loading) return;
     setPageToken(null);
@@ -60,11 +70,28 @@ const search = () => {
       if (!viewMembers) {
         fetchRestaurants();
       } else {
-        // fetchMembers();
+        if (!searchText) {
+          setFilteredData(allUsersPagination?.data || []);
+        } else {
+          searchUsers(searchText);
+        }
       }
-    }, 500); // 500ms delay
+    }, 275); // 275ms delay
   }, [searchText]);
 
+  /**
+   * The function `fetchRestaurants` is an asynchronous function that fetches restaurant data from the
+   * Google Places API based on a search query and location, with the ability to fetch additional pages
+   * of results using a page token.
+   * @param {string | null} [pageToken] - The `pageToken` parameter in the `fetchRestaurants` function is
+   * used to indicate whether to fetch the initial page of restaurants or the next page of restaurants.
+   * If `pageToken` is not provided or is `null`, it means that the function is fetching the initial page
+   * of restaurants.
+   * @returns The `fetchRestaurants` function is making an asynchronous API call to fetch restaurant data
+   * using the Google Places API. It constructs a request body with search parameters like text query,
+   * rank preference, included type, and location bias. The function sends a POST request to the
+   * specified URL with the constructed body and headers containing the API key.
+   */
   const fetchRestaurants = async (pageToken?: string | null) => {
     if (!pageToken) console.log("Fetching restaurant...");
     if (pageToken) console.log("Fetching next page of restaurants...");
@@ -73,7 +100,7 @@ const search = () => {
     const apiKey = GOOGLE_PLACES_API_KEY;
 
     const body: any = {
-      textQuery: searchText || "restaurant",
+      textQuery: searchText || "food",
       rankPreference: "DISTANCE",
       includedType: "restaurant",
       locationBias: {
@@ -82,8 +109,7 @@ const search = () => {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
           },
-          radius: 500,
-          // radius: 16093.4,
+          radius: 16093.4,
         },
       },
     };
@@ -108,27 +134,33 @@ const search = () => {
       setPageToken(data?.nextPageToken);
 
       if (!data || !data.places) {
-        console.log("No data returned");
         setData([]);
         setFilteredData([]);
         return;
       }
-      data = data.places.map((restaurant: any) => ({
-        placeId: restaurant.id,
-        coordinate: {
-          latitude: restaurant.location.latitude,
-          longitude: restaurant.location.longitude,
-        },
-        name: restaurant.displayName.text,
-        openNow: restaurant.regularOpeningHours?.openNow,
-        price: restaurant.priceLevel,
-        types: restaurant.types,
-        primaryType: restaurant.primaryType,
-        address: restaurant.formattedAddress,
-        phoneNumber: restaurant.nationalPhoneNumber,
-        website: restaurant.websiteUri,
-        addressComponents: JSON.stringify(restaurant.addressComponents),
-      }));
+      data = data.places.map(
+        (restaurant: any) =>
+          ({
+            placeId: restaurant.id,
+            coordinate: {
+              latitude: restaurant.location.latitude,
+              longitude: restaurant.location.longitude,
+            },
+            name: restaurant.displayName.text,
+            openNow: restaurant.regularOpeningHours?.openNow,
+            price: restaurant.priceLevel,
+            types: restaurant.types,
+            primaryType: restaurant.primaryType,
+            address: restaurant.formattedAddress,
+            phoneNumber: restaurant.nationalPhoneNumber,
+            website: restaurant.websiteUri,
+            addressComponents: JSON.stringify(restaurant.addressComponents),
+            distance: distanceBetweenCoordinates(location.coords, {
+              latitude: restaurant.location.latitude,
+              longitude: restaurant.location.longitude,
+            }),
+          } as RestaurantItem)
+      );
 
       setData((prev: any) => (pageToken ? [...prev, ...data] : data));
       setFilteredData((prev: any) => (pageToken ? [...prev, ...data] : data));
@@ -136,18 +168,16 @@ const search = () => {
       console.log("Error fetching restaurant: ", error);
     } finally {
       setLoading(false);
+      setFetchingMoreRestaurants(false);
     }
   };
 
   const renderRowItem = ({ item }: any) => {
+    if (item.email && item.email === getAuth().currentUser?.email) return null;
     return (
       <>
         {viewMembers ? (
-          <ListingsMemberItem
-            key={item.username}
-            user={item}
-            onPress={() => router.push("/(authenticated)/(tabs)/(search)/profile/1")}
-          />
+          <ListingsMemberItem key={item.id} user={item} />
         ) : (
           <ListingsRestaurantItem key={item.placeId} restaurant={item} />
         )}
@@ -158,14 +188,29 @@ const search = () => {
   const endOfListReached = async () => {
     // If the list is shorter than the flatlist, don't fetch more data
     const itemsHeight = data.length * 80;
-    if (loading || data.length === 0 || itemsHeight < flatListHeight) return;
+    if (loading || data.length === 0 || itemsHeight < flatListHeight || fetchingMoreRestaurants)
+      return;
     console.log("End of list reached");
 
-    if (!viewMembers) {
+    if (!viewMembers && pageToken) {
+      setFetchingMoreRestaurants(true);
       fetchRestaurants(pageToken);
     } else {
-      // fetchMembers();
+      fetchUsers(allUsersPagination?.lastDoc).then((users) => {
+        setAllUsersPagination(users);
+      });
     }
+  };
+
+  const searchUsers = (searchText: string) => {
+    if (!allUsersPagination) return;
+    const filtered = allUsersPagination.data.filter(
+      (user) =>
+        user.firstName?.toLowerCase().includes(searchText.toLowerCase()) ||
+        user.lastName?.toLowerCase().includes(searchText.toLowerCase())
+    );
+    if (filtered.length === 0) return;
+    setFilteredData(filtered);
   };
 
   return (
@@ -179,7 +224,7 @@ const search = () => {
           { label: "Restaurants", icon: "storefront" },
           { label: "Members", icon: "person" },
         ]}
-        showFilter={!viewMembers}
+        showFilter={false}
       />
 
       <View style={{ flex: 1 }}>
@@ -189,20 +234,18 @@ const search = () => {
           </View>
         ) : (
           <FlatList
-            ref={flatListRef}
-            contentContainerStyle={{ paddingTop: 75, flex: 1 }}
+            contentContainerStyle={[{ paddingTop: 75 }, !filteredData.length && { flex: 1 }]}
             data={filteredData}
             renderItem={renderRowItem}
             keyExtractor={(item) => item.placeId}
             showsVerticalScrollIndicator={false}
-            onContentSizeChange={(_, h) => setDataHeight(h)}
             onLayout={(event) => setFlatListHeight(event.nativeEvent.layout.height)}
             onEndReached={() => endOfListReached()}
-            onEndReachedThreshold={0.5}
+            onEndReachedThreshold={0.75}
             ListEmptyComponent={() => (
               <View style={styles.loadingScreen}>
                 <Text style={{ color: Colors.gray, fontSize: Font.medium }}>
-                  No restaurants found
+                  {viewMembers ? "No members found" : "No restaurants found"}
                 </Text>
               </View>
             )}

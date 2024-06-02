@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { zustandStorage } from "@/store/async-storage";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { User } from "@/classes/User";
 
 export interface FilterState {
   cuisineFilter: string[];

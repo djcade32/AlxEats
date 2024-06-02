@@ -1,19 +1,19 @@
 import { useFonts } from "expo-font";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import CustomHeader from "@/components/CustomHeader";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import { AppRegistry } from "react-native";
-import { initializeFirebase } from "@/firebase";
+import { checkIfEmailExists, getUserRestaurantsToTryList, initializeFirebase } from "@/firebase";
 
 import { LinearGradient } from "expo-linear-gradient";
-import { useAppStore } from "@/store/app-storage";
 import { getAuth } from "firebase/auth";
+import { useAppStore } from "@/store/app-storage";
 
 initializeFirebase();
 
@@ -31,9 +31,6 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 function InitialLayout() {
-  const [isLoading, setIsLoading] = useState(true);
-  const { setPendingEmailVerification } = useAppStore();
-
   const [loaded, error] = useFonts({
     nm: require("../assets/fonts/NanumMyeongjo-Regular.ttf"),
     "nm-sb": require("../assets/fonts/NanumMyeongjo-Bold.ttf"),
@@ -44,7 +41,7 @@ function InitialLayout() {
     nycd: require("../assets/fonts/NothingYouCouldDo-Regular.ttf"),
   });
   const router = useRouter();
-  const segments = useSegments();
+  const { setAuthUser, setUserDbInfo, setUserToTryRestaurants } = useAppStore();
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
@@ -60,15 +57,20 @@ function InitialLayout() {
   useEffect(() => {
     if (!loaded) return;
     getAuth().onAuthStateChanged((user) => {
-      setIsLoading(false);
       if (!user) {
         router.replace("/");
-        // router.replace("/emailVerification");
       } else if (user && !user.emailVerified) {
         return;
       } else {
-        // TODO: Add check for if user is in the database
-        router.replace("/(authenticated)/(tabs)/home");
+        setAuthUser(user);
+        checkIfEmailExists().then((exists) => {
+          if (exists) {
+            setUserDbInfo({ ...exists, criteria: JSON.parse(exists.criteria) });
+          }
+          exists ? router.replace("/(authenticated)/home") : router.replace("(onboarding)/");
+        });
+        // router.replace("/(authenticated)/(modals)/RankRestaurant/selectedPhotos");
+        // router.replace("/(authenticated)/(modals)/RankRestaurant");
       }
     });
   }, [loaded]);

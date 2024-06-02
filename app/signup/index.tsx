@@ -14,6 +14,7 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { useAppStore } from "@/store/app-storage";
 import { FirebaseError } from "firebase/app";
+import CustomLoadingButton from "@/components/CustomLoadingButton";
 
 /**
  * The `index` component is responsible for rendering the signup page.
@@ -124,12 +125,13 @@ const index = () => {
         />
       </View>
 
-      <CustomButton
+      <CustomLoadingButton
         text="Create Account"
         buttonStyle={[styles.btnContainer, { backgroundColor: Colors.primary }]}
         textStyle={[styles.btnText, { color: "white" }]}
         onPress={handleCreateAccount}
         disabled={!email || !password}
+        loading={loading}
       />
     </View>
   );

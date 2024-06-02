@@ -9,7 +9,7 @@ import {
   GooglePlacesAutocomplete,
   GooglePlacesAutocompleteRef,
 } from "react-native-google-places-autocomplete";
-import Geolocation from "@react-native-community/geolocation";
+// import Geolocation from "@react-native-community/geolocation";
 import { types } from "@babel/core";
 
 const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
@@ -34,15 +34,15 @@ const ListingsScreenHeader = ({
   const ref = useRef<any>();
   const router = useRouter();
   const [location, setLocation] = useState<any>(null);
-  Geolocation.setRNConfiguration({
-    skipPermissionRequests: false,
-    authorizationLevel: "auto",
-    enableBackgroundLocationUpdates: true,
-    locationProvider: "auto",
-  });
+  // Geolocation.setRNConfiguration({
+  //   skipPermissionRequests: false,
+  //   authorizationLevel: "auto",
+  //   enableBackgroundLocationUpdates: true,
+  //   locationProvider: "auto",
+  // });
   const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
-  Geolocation.getCurrentPosition((info) => {});
+  // Geolocation.getCurrentPosition((info) => {});
 
   return (
     <Stack.Screen

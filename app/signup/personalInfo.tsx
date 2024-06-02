@@ -77,7 +77,7 @@ const personalInfo = () => {
       if (!validateForm()) return;
       // signUpUser(getAuth(), email, password);
       await createAccount(email, password);
-      setPendingEmailVerification(true);
+      // setPendingEmailVerification(true);
       // sendEmailVerification(getAuth().currentUser)
     } catch (err: any) {
       console.error(JSON.stringify(err, null, 2));

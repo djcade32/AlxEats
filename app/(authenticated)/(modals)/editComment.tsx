@@ -13,14 +13,16 @@ import Colors from "@/constants/Colors";
 import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Font from "@/constants/Font";
+import { useRestaurantRankingStore } from "@/store/restaurantRanking-storage";
 
 const DummyText =
   "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
 const editComment = () => {
+  const { comment, updateComment } = useRestaurantRankingStore();
   const router = useRouter();
   const { height } = Dimensions.get("window");
-  const [comment, setComment] = useState(DummyText);
+  const [commentDraft, setCommentDraft] = useState(DummyText);
   const [isFocused, setIsFocused] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -39,6 +41,8 @@ const editComment = () => {
     const keyboardDidHideListener = Keyboard.addListener("keyboardDidHide", () => {
       setKeyboardHeight(0);
     });
+
+    setCommentDraft(comment);
 
     return () => {
       keyboardDidShowListener.remove();
@@ -61,6 +65,12 @@ const editComment = () => {
     if (!isFocused) return;
     scrollViewRef.current?.scrollTo({ y: height, animated: true });
   }
+
+  const hanleSavePressed = () => {
+    updateComment(commentDraft);
+    setEditMode(false);
+    router.back();
+  };
 
   const OFFSET = 50;
 
@@ -92,12 +102,7 @@ const editComment = () => {
           headerRight: () => (
             <View style={styles.headerIconContainer}>
               {editMode ? (
-                <TouchableOpacity
-                  onPress={() => {
-                    router.back();
-                    setEditMode(false);
-                  }}
-                >
+                <TouchableOpacity onPress={hanleSavePressed}>
                   <Text style={{ color: Colors.primary, fontSize: 18 }}>Save</Text>
                 </TouchableOpacity>
               ) : (
@@ -128,8 +133,8 @@ const editComment = () => {
         <TextInput
           ref={textInputRef}
           style={[styles.textInputContainer, { paddingBottom: isFocused ? 100 : 20 }]}
-          value={comment}
-          onChangeText={(text) => setComment(text)}
+          value={commentDraft}
+          onChangeText={(text) => setCommentDraft(text)}
           placeholder="Comments about the restaurant..."
           placeholderTextColor={Colors.gray}
           multiline

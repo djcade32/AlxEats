@@ -86,6 +86,7 @@ const styles = StyleSheet.create({
     fontSize: Font.small,
     color: Colors.black,
     marginBottom: 20,
+    textAlign: "center",
   },
   modalButton: {
     backgroundColor: Colors.primary,

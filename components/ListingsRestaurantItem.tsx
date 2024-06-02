@@ -1,10 +1,14 @@
 import { StyleSheet, Text, View, TouchableOpacity, useWindowDimensions } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Colors from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Font from "@/constants/Font";
 import { RestaurantItem } from "@/interfaces";
+import { checkIfRestaurantInList, getDb, restaurantAdded, restaurantRemoved } from "@/firebase";
+import { getAuth } from "firebase/auth";
+import { useAppStore } from "@/store/app-storage";
+import { collection, onSnapshot, query } from "firebase/firestore";
 
 interface ListingsRestaurantItemProps {
   restaurant: RestaurantItem;
@@ -13,11 +17,68 @@ interface ListingsRestaurantItemProps {
 
 const ListingsRestaurantItem = ({ restaurant, ranking = false }: ListingsRestaurantItemProps) => {
   const router = useRouter();
+  const { authUser, userDbInfo, userToTryRestaurants, userTriedRestaurants } = useAppStore();
+
   const { width } = useWindowDimensions();
+  const [isToTry, setIsToTry] = useState(false);
+  const [rankingValue, setRankingValue] = useState<number | null>(null);
   const TEXT_AVAILABLE_WIDTH = width - 130;
 
-  const handleRestaurantPress = (item: any) => {
-    router.push(`/restaurantDetails/${JSON.stringify(item)}`);
+  // useEffect(() => {
+  //   if (!authUser?.uid || !restaurant.placeId) return;
+  //   (async () => {
+  //     try {
+  //       await checkIfRestaurantInList(authUser.uid, restaurant.placeId, "TO_TRY").then((result) => {
+  //         setIsToTry(!!result);
+  //       });
+  //       await checkIfRestaurantInList(authUser.uid, restaurant.placeId, "TRIED").then((result) => {
+  //         setRankingValue(result?.ranking);
+  //       });
+  //     } catch (error) {
+  //       console.log("Error checking performing restaurant checks: ", error);
+  //     }
+  //   })();
+  // }, [authUser, restaurant]);
+
+  useEffect(() => {
+    setIsToTry(userToTryRestaurants.includes(restaurant.placeId));
+  }, [userToTryRestaurants]);
+
+  useEffect(() => {
+    const ranking = userTriedRestaurants.find((r) => r.id === restaurant.placeId)?.ranking;
+    if (ranking) setRankingValue(ranking);
+  }, [userTriedRestaurants]);
+
+  const handleRestaurantPress = (item: RestaurantItem) => {
+    router.push({
+      pathname: `/restaurantDetails/${JSON.stringify(item.placeId)}`,
+      params: { restaurant: JSON.stringify(item) },
+    });
+  };
+
+  const handleTriedPress = async () => {
+    if (!authUser) return;
+
+    router.push({
+      pathname: "/(authenticated)/(modals)/RankRestaurant/",
+      params: { restaurant: JSON.stringify(restaurant), isToTry: `${isToTry}` },
+    });
+  };
+
+  const handleToTryPress = async () => {
+    if (!authUser) return;
+
+    try {
+      if (isToTry) {
+        await restaurantRemoved(authUser.uid, restaurant.placeId, "TO_TRY");
+        setIsToTry(false);
+        return;
+      }
+      await restaurantAdded(authUser.uid, restaurant.placeId, "TO_TRY");
+      setIsToTry(true);
+    } catch (error) {
+      console.log("Error adding or removing restaurant to to try list: ", error);
+    }
   };
   return (
     <View style={styles.container} key={restaurant.placeId}>
@@ -37,17 +98,21 @@ const ListingsRestaurantItem = ({ restaurant, ranking = false }: ListingsRestaur
         </View>
       </TouchableOpacity>
       <View style={{ height: 45 }}>
-        {ranking ? (
+        {rankingValue ? (
           <View style={styles.rankingCircle}>
-            <Text style={styles.rankingText}>{8.0}</Text>
+            <Text style={styles.rankingText}>{rankingValue}</Text>
           </View>
         ) : (
           <View style={styles.actionButtons}>
-            <TouchableOpacity>
-              <Ionicons name="add-circle-outline" size={30} color={Colors.black} />
+            <TouchableOpacity onPress={handleTriedPress}>
+              <Ionicons name="add-circle-outline" size={30} color={Colors.primary} />
             </TouchableOpacity>
-            <TouchableOpacity>
-              <Ionicons name="bookmark-outline" size={30} color={Colors.black} />
+            <TouchableOpacity onPress={handleToTryPress}>
+              <Ionicons
+                name={isToTry ? "bookmark" : "bookmark-outline"}
+                size={30}
+                color={Colors.primary}
+              />
             </TouchableOpacity>
           </View>
         )}

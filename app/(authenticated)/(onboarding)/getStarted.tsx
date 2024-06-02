@@ -4,12 +4,13 @@ import Colors from "@/constants/Colors";
 import Font from "@/constants/Font";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { User } from "@/interfaces";
+import { Criteria, User } from "@/interfaces";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
 import { app, addUserToFirebase } from "@/firebase";
 import CustomLoadingButton from "@/components/CustomLoadingButton";
 import { getAuth } from "firebase/auth";
+import { uploadImageAsync } from "@/common-utils";
 
 const getStarted = () => {
   const paramObj = useLocalSearchParams() as any as User;
@@ -30,10 +31,10 @@ const getStarted = () => {
       if (user.profilePic) {
         await prepPhotoUrl(user.profilePic);
       }
-      user.id = uuidv4();
+      user.id = getAuth().currentUser?.uid!;
       user.email = getAuth().currentUser?.email!;
       user.createdAt = new Date().toISOString();
-      user.criteria = JSON.parse(paramObj.criteria as string);
+      user.criteria = paramObj.criteria;
       console.log("User: ", user);
       addUserToFirebase(user);
       router.replace("/(authenticated)/home");
@@ -46,7 +47,7 @@ const getStarted = () => {
 
   const prepPhotoUrl = async (profilePic: string): Promise<void> => {
     try {
-      const url = await uploadImageAsync(profilePic);
+      const url = await uploadImageAsync(profilePic, `user-profile-pics/${uuidv4()}`);
       paramObj.profilePic = url;
       return Promise.resolve();
     } catch (error) {
@@ -55,35 +56,6 @@ const getStarted = () => {
     }
   };
 
-  async function uploadImageAsync(uri: string) {
-    console.log("uploadImageAsync: ", uri);
-    if (!uri || app == null) return;
-    const storageUrl = "user-profile-pics";
-    // Why are we using XMLHttpRequest? See:
-    // https://github.com/expo/expo/issues/2402#issuecomment-443726662
-    const blob = await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.onload = function () {
-        resolve(xhr.response);
-      };
-      xhr.onerror = function (e) {
-        console.log(e);
-        reject(new TypeError("Network request failed"));
-      };
-      xhr.responseType = "blob";
-      xhr.open("GET", uri, true);
-      xhr.send(null);
-    });
-
-    const fileRef = ref(getStorage(), `user-profile-pics/${uuidv4()}`);
-    const result = await uploadBytes(fileRef, blob);
-    console.log("result: ", result);
-
-    // We're done with the blob, close and release it
-    blob.close();
-
-    return await getDownloadURL(fileRef);
-  }
   return (
     <View style={styles.container}>
       <Text style={styles.text}>

@@ -1,11 +1,16 @@
 import { StyleSheet, Text, View, TouchableOpacity, Image, FlatList } from "react-native";
-import React from "react";
-import { Stack } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Stack, useLocalSearchParams } from "expo-router";
 import CustomAuthenticatedHeader from "@/components/CustomAuthenticatedHeader";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import Font from "@/constants/Font";
 import CustomHeader from "@/components/CustomHeader";
+import { User } from "@/interfaces";
+import { getUserById } from "@/firebase";
+import { AnimateStyle } from "react-native-reanimated";
+import LoadingText from "@/components/LoadingText";
+import { getAuth } from "firebase/auth";
 
 const DummyData = [
   {
@@ -83,43 +88,91 @@ const DummyData = [
 ];
 
 const profile = () => {
+  let userId = JSON.parse(useLocalSearchParams<any>().userId as string);
+  const [loading, setLoading] = useState(true);
+  const [isCurrentUser, setIsCurrentUser] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    setIsCurrentUser(userId === getAuth().currentUser?.uid);
+    getUserById(userId).then((user) => {
+      setUser(user);
+      setLoading(false);
+    });
+  }, []);
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
       <Stack.Screen
         options={{
           header: () => (
             <CustomHeader
-              title="@johndoe"
+              title={`@${user?.firstName}.${user?.lastName}`}
               headerLeft={
                 <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />
               }
+              loading={loading}
             />
           ),
         }}
       ></Stack.Screen>
       <View>
-        <View style={{ flexDirection: "row", paddingHorizontal: 22, paddingVertical: 10 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            paddingHorizontal: 22,
+            paddingVertical: 10,
+            alignItems: "center",
+          }}
+        >
           <Image
-            source={{ uri: "https://randomuser.me/api/portraits/men/80.jpg" }}
-            style={{ height: 106, width: 106, borderRadius: 53, resizeMode: "cover" }}
+            source={{ uri: user?.profilePic }}
+            style={{
+              height: 106,
+              width: 106,
+              borderRadius: 53,
+              resizeMode: "cover",
+              backgroundColor: Colors.lightGray,
+            }}
           />
           <View style={{ marginLeft: 12, marginTop: 10 }}>
-            <Text style={{ fontSize: 20, fontFamily: "nm-b" }}>John Doe</Text>
-            <Text style={{ fontSize: 16, color: Colors.gray, marginTop: 5 }}>@johndoe</Text>
-            <TouchableOpacity
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                paddingVertical: 5,
-                paddingHorizontal: 15,
-                borderRadius: 25,
-                marginTop: 10,
-                borderWidth: 1,
-                borderColor: Colors.gray,
-              }}
-            >
-              <Text style={{ color: Colors.gray }}>Edit profile</Text>
-            </TouchableOpacity>
+            <View>
+              <LoadingText
+                title={`${user?.firstName} ${user?.lastName}`}
+                loading={loading}
+                textStyle={{ fontSize: 20, fontFamily: "nm-b" }}
+                containerStyle={{ height: 25, width: 120, borderRadius: 15 }}
+              />
+            </View>
+            <LoadingText
+              title={`@${user?.firstName}.${user?.lastName}`}
+              loading={loading}
+              textStyle={{ fontSize: 16, color: Colors.gray, marginTop: 5 }}
+              containerStyle={{ height: 17, width: 100, borderRadius: 10, marginTop: 5 }}
+            />
+
+            {isCurrentUser && (
+              <TouchableOpacity
+                style={{
+                  alignItems: "center",
+                  paddingVertical: 3,
+                  paddingHorizontal: 10,
+                  borderRadius: 25,
+                  marginTop: 10,
+                  borderWidth: 1,
+                  borderColor: Colors.gray,
+                  width: 120,
+                }}
+              >
+                <Text
+                  style={{
+                    color: Colors.gray,
+                    textAlign: "center",
+                  }}
+                >
+                  Edit profile
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 

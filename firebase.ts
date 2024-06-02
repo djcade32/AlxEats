@@ -1,5 +1,21 @@
 import { FirebaseApp, initializeApp } from "firebase/app";
-import { doc, getFirestore, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  getFirestore,
+  orderBy,
+  query,
+  setDoc,
+  where,
+  limit,
+  startAfter,
+  DocumentData,
+  arrayUnion,
+  FieldValue,
+  arrayRemove,
+  getDoc,
+} from "firebase/firestore";
 import {
   Auth,
   createUserWithEmailAndPassword,
@@ -10,11 +26,14 @@ import {
   getAuth,
   signInWithEmailAndPassword,
   sendPasswordResetEmail as sendPasswordResetEmailFirebase,
+  UserCredential,
 } from "firebase/auth";
 import firebase from "firebase/compat/app";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { User } from "./interfaces";
+import { FetchUsersPayload, RestaurantItem, RestaurantRankingPayload, User } from "./interfaces";
+import { UserRestaurantsList } from "./types";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
 export let app: FirebaseApp | null = null;
 export let auth: Auth | null = null;
@@ -86,14 +105,14 @@ export const createAccount = async (
   }
 };
 
-export const signIn = async (email: string, password: string): Promise<void> => {
+export const signIn = async (email: string, password: string): Promise<UserCredential> => {
   if (!getAuth()) {
     console.log("ERROR: There was a problem getting Firebase auth.");
     return Promise.reject();
   }
   try {
-    await signInWithEmailAndPassword(getAuth(), email, password);
-    return Promise.resolve();
+    const user = await signInWithEmailAndPassword(getAuth(), email, password);
+    return Promise.resolve(user);
   } catch (error) {
     console.log("ERROR: There was a problem signing in: ", error);
     return Promise.reject(error);
@@ -145,4 +164,217 @@ export const sendPasswordResetEmail = async (email: string): Promise<void> => {
     .catch((error) => {
       Promise.reject(error);
     });
+};
+
+/* `checkIfEmailExists` is a function that checks if the email of the currently
+authenticated user exists in the Firebase database. Here's a breakdown of what the
+function does: */
+export const checkIfEmailExists = async (): Promise<any> => {
+  let emailExists = null;
+  const db = getDb();
+  const email = getAuth().currentUser?.email;
+  if (!db || !email) return emailExists;
+  const q = query(collection(db, "users"), where("email", "==", email.toLowerCase()));
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) {
+    console.log("No matching documents.");
+    return emailExists;
+  }
+  emailExists = querySnapshot.docs[0].data() as User | null;
+  return emailExists;
+};
+
+export const fetchUsers = async (
+  lastDoc: DocumentData | null = null,
+  limitCount?: number
+): Promise<FetchUsersPayload> => {
+  const db = getDb();
+  if (!db) {
+    return Promise.reject("Error: Database not found");
+  }
+  if (!limitCount) limitCount = 25;
+  const q = !lastDoc
+    ? query(collection(db, "users"), limit(limitCount))
+    : query(collection(db, "users"), startAfter(lastDoc), limit(limitCount));
+  const querySnapshot = await getDocs(q);
+  const users: User[] = [];
+  querySnapshot.forEach((doc) => {
+    users.push(doc.data() as User);
+  });
+  //TODO: Create a pagination object to return with the users
+  const fetchUsersPayload: FetchUsersPayload = {
+    lastDoc: querySnapshot.docs[querySnapshot.docs.length - 1],
+    data: users,
+  };
+  return fetchUsersPayload;
+};
+
+export const getUserById = async (id: string): Promise<User | null> => {
+  const db = getDb();
+  if (!db) {
+    return Promise.reject("Error: Database not found");
+  }
+  if (!id) return null;
+  const q = query(collection(db, "users"), where("id", "==", id));
+  const querySnapshot = await getDocs(q);
+  let user: User | null = null;
+  querySnapshot.forEach((doc) => {
+    user = doc.data() as User;
+  });
+  return user;
+};
+
+export const restaurantAdded = async (
+  userId: string,
+  restaurantId: string,
+  list: UserRestaurantsList,
+  RestaurantRankingPayload?: RestaurantRankingPayload
+): Promise<void> => {
+  const db = getDb();
+  if (!db) {
+    return Promise.reject("Error: Database not found");
+  }
+  if (!userId || !restaurantId || !list)
+    return Promise.reject("Error: Missing user or restaurant id or list");
+  if (list === "TRIED" && !RestaurantRankingPayload)
+    return Promise.reject("Error: Missing RestaurantRankingPayload for tried restaurant");
+  const dbUrl = `userRestaurants/${userId}/${list === "TO_TRY" ? "toTry" : "tried"}/data`;
+  const userRef = doc(db, dbUrl);
+  const docSnap = await getDoc(userRef);
+
+  let length = 0;
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    length = data.data.length;
+  }
+  await setDoc(
+    userRef,
+    {
+      data: list === "TRIED" ? arrayUnion(RestaurantRankingPayload) : arrayUnion(restaurantId),
+      length: length + 1,
+    },
+    { merge: true }
+  );
+  console.log(`Restaurant ${restaurantId} added to ${list} list for user ${userId}`);
+  return Promise.resolve();
+};
+
+export const restaurantRemoved = async (
+  userId: string,
+  restaurantId: string,
+  list: UserRestaurantsList,
+  restaurantItem?: RestaurantItem,
+  ranking?: number
+): Promise<void> => {
+  const db = getDb();
+  try {
+    if (!db) {
+      return Promise.reject("Error: Database not found");
+    }
+    if (!userId || !restaurantId || !list)
+      return Promise.reject("Error: Missing user or restaurant id or list");
+    if (list === "TRIED" && !ranking)
+      return Promise.reject("Error: Missing ranking for tried restaurant");
+    const dbUrl = `userRestaurants/${userId}/${list === "TO_TRY" ? "toTry" : "tried"}/data`;
+    const userRef = doc(db, dbUrl);
+    const docSnap = await getDoc(userRef);
+    let length = 0;
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      length = data.data.length;
+    }
+
+    await setDoc(
+      userRef,
+      {
+        data:
+          list === "TRIED"
+            ? arrayRemove({ ...restaurantItem, ranking })
+            : arrayRemove(restaurantId),
+        length: length - 1,
+      },
+      { merge: true }
+    );
+    console.log(`Restaurant ${restaurantId} removed from ${list} list for user ${userId}`);
+    return Promise.resolve();
+  } catch (error) {
+    console.log("Error removing restaurant from list: ", error);
+  }
+};
+
+// check if restaurant is in user's list
+export const checkIfRestaurantInList = async (
+  userId: string,
+  restaurantId: string,
+  list: "TO_TRY" | "TRIED" // Update this type as necessary
+): Promise<any> => {
+  const db = getDb();
+  try {
+    if (!db) {
+      return Promise.reject("Error: Database not found");
+    }
+    if (!userId || !restaurantId || !list) {
+      return Promise.reject("Error: Missing user or restaurant id or list");
+    }
+
+    const dbUrl = `userRestaurants/${userId}/${list === "TO_TRY" ? "toTry" : "tried"}/data`;
+    const userRef = doc(db, dbUrl);
+
+    const docSnap = await getDoc(userRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+
+      return data.data.filter((item: any) => {
+        if (list === "TO_TRY" && item === restaurantId) {
+          return Promise.resolve(item);
+        } else if (list === "TRIED" && item.id === restaurantId) {
+          return item;
+        }
+      })[0];
+    } else {
+      console.log("Document does not exist");
+      return; // Document does not exist
+    }
+  } catch (error: any) {
+    return Promise.reject(`Error: ${error.message}`);
+  }
+};
+
+export const getUserRestaurantsToTryList = async (userId: string): Promise<string[]> => {
+  const db = getDb();
+  if (!db) {
+    return Promise.reject("Error: Database not found");
+  }
+  if (!userId) return Promise.reject("Error: Missing user id");
+  const dbUrl = `userRestaurants/${userId}/toTry/data`;
+  const userRef = doc(db, dbUrl);
+  const docSnap = await getDoc(userRef);
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    return data.data;
+  } else {
+    console.log("Document does not exist");
+    return []; // Document does not exist
+  }
+};
+
+export const getUserRestaurantsTriedList = async (
+  userId: string
+): Promise<RestaurantRankingPayload[]> => {
+  const db = getDb();
+  if (!db) {
+    return Promise.reject("Error: Database not found");
+  }
+  if (!userId) return Promise.reject("Error: Missing user id");
+  const dbUrl = `userRestaurants/${userId}/tried/data`;
+  const userRef = doc(db, dbUrl);
+  const docSnap = await getDoc(userRef);
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    return data.data;
+  } else {
+    console.log("Document does not exist");
+    return []; // Document does not exist
+  }
 };
