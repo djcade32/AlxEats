@@ -168,7 +168,14 @@ const rankRestaurant = () => {
       if (isToTry) {
         await restaurantRemoved(userDbInfo?.id!, restaurantObj.placeId, "TO_TRY");
       }
-      await restaurantAdded(userDbInfo?.id!, restaurantObj.placeId, "TRIED", restaurantRankingObj);
+      await restaurantAdded(
+        userDbInfo?.id!,
+        userDbInfo?.firstName!,
+        restaurantObj.name,
+        restaurantObj.placeId,
+        "TRIED",
+        restaurantRankingObj
+      );
     } catch (error) {
       console.log("Error saving rank: ", error);
       Alert.alert("Error saving rank. Please try again.");

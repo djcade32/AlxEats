@@ -14,3 +14,9 @@ export type RestaurantCriteriaTypes =
   | "Atmosphere"
   | "Price"
   | "Overall Experience";
+
+export type RestaurantFilterSortByTypes = "Distance" | "Score" | "Price";
+
+export type RestaurantFilterSortOrder = "ASC" | "DESC";
+
+export type PostActivityTypes = "TRIED_POST" | "TO_TRY_POST";

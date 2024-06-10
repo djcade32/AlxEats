@@ -67,10 +67,11 @@ function InitialLayout() {
           if (exists) {
             setUserDbInfo({ ...exists, criteria: JSON.parse(exists.criteria) });
           }
+          // router.replace("/(authenticated)/(modals)/Filter");
+
           exists ? router.replace("/(authenticated)/home") : router.replace("(onboarding)/");
         });
         // router.replace("/(authenticated)/(modals)/RankRestaurant/selectedPhotos");
-        // router.replace("/(authenticated)/(modals)/RankRestaurant");
       }
     });
   }, [loaded]);

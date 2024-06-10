@@ -1,5 +1,5 @@
 import { StyleSheet, View, Image } from "react-native";
-import React, { memo, useEffect, useState } from "react";
+import React, { memo, useEffect, useRef, useState } from "react";
 import MapView from "react-native-map-clustering";
 import { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import Colors from "@/constants/Colors";
@@ -14,7 +14,9 @@ interface ListingsMapProps {
 }
 
 const ListingsMap = memo(({ data }: ListingsMapProps) => {
+  const mapViewRef = useRef<any>(null);
   const [userLocation, setUserLocation] = useState<Location.LocationObjectCoords | null>(null);
+  const [initialRegion, setInitialRegion] = useState<any>();
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     (async () => {
@@ -24,22 +26,32 @@ const ListingsMap = memo(({ data }: ListingsMapProps) => {
     })();
   }, []);
 
-  // useEffect(() => {
-  //   console.log("data changed");
-  //   if (!isRestaurantItem(data[0])) {
-  //     console.log("data is not a restaurant item");
-  //     setLoaded(false);
-  //   }
-  // }, [data]);
+  useEffect(() => {
+    setInitialRegion({
+      latitude: userLocation?.latitude || 38.81,
+      longitude: userLocation?.longitude || -77.04,
+      latitudeDelta: 0.0922,
+      longitudeDelta: 0.0421,
+    });
+  }, [userLocation]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    mapViewRef?.current?.animateToRegion(initialRegion);
+  }, [data]);
 
   const onMarkerPress = (item: any) => {
-    router.push(`/restaurantDetails/${JSON.stringify(item)}`);
+    router.push({
+      pathname: `/restaurantDetails/${JSON.stringify(item.placeId)}`,
+      params: { restaurant: JSON.stringify(item) },
+    });
   };
 
   if (!loaded) return <View style={{ flex: 1 }}></View>;
   return (
     <View style={{ flex: 1 }}>
       <MapView
+        ref={mapViewRef}
         animationEnabled={false}
         style={StyleSheet.absoluteFill}
         provider={PROVIDER_GOOGLE}

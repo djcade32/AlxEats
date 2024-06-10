@@ -36,7 +36,7 @@ const getStarted = () => {
       user.createdAt = new Date().toISOString();
       user.criteria = paramObj.criteria;
       console.log("User: ", user);
-      addUserToFirebase(user);
+      await addUserToFirebase(user);
       router.replace("/(authenticated)/home");
     } catch (error) {
       console.log("ERROR: There was a problem saving the user to the database: ", error);

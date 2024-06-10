@@ -8,6 +8,13 @@ import { getAuth, signOut } from "firebase/auth";
 
 const settings = () => {
   const router = useRouter();
+  const signUserOut = async () => {
+    try {
+      await signOut(getAuth());
+    } catch (error) {
+      console.log("ERROR: There was a problem signing out: ", error);
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
@@ -28,7 +35,7 @@ const settings = () => {
           ),
         }}
       ></Stack.Screen>
-      <TouchableOpacity onPress={() => signOut(getAuth())}>
+      <TouchableOpacity onPress={signUserOut}>
         <Text>Sign out</Text>
       </TouchableOpacity>
     </SafeAreaView>

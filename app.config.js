@@ -17,7 +17,7 @@ export default {
       supportsTablet: true,
       bundleIdentifier: "com.djcade32.AlxEats",
       config: {
-        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY,
+        googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS,
       },
     },
     android: {

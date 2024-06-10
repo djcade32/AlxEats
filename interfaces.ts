@@ -1,5 +1,11 @@
 import { DocumentData } from "firebase/firestore";
-import { RestaurantCriteriaTypes, RestaurantPriceLevel } from "./types";
+import {
+  PostActivityTypes,
+  RestaurantCriteriaTypes,
+  RestaurantFilterSortByTypes,
+  RestaurantFilterSortOrder,
+  RestaurantPriceLevel,
+} from "./types";
 
 export interface CreatingUserPayload {
   email: string;
@@ -60,4 +66,26 @@ export interface RestaurantRankingPayload {
   photos: string[];
   comment: string;
   criteriaReference: Record<RestaurantCriteriaTypes, number>;
+}
+
+export interface RestaurantListFilterPayload {
+  cuisinesFilter: string[];
+  priceMax: string;
+  scoreRange: { min: number; max: number };
+  sortOrder: RestaurantFilterSortOrder;
+  sortBy: RestaurantFilterSortByTypes;
+}
+
+export interface FeedPost {
+  restaurantId: string;
+  comment?: string;
+  photos?: string[];
+  ranking?: number;
+  activityType: PostActivityTypes;
+  userId: string;
+  content: string;
+  activityId: string;
+  createdAt: Date;
+  likes: string[];
+  shares: string[];
 }

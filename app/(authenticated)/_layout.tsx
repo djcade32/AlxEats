@@ -32,6 +32,9 @@ const _layout = () => {
   // }, []);
 
   useEffect(() => {
+    setUserToTryRestaurants([]);
+
+    if (!userDbInfo) return;
     let db = getDb();
     const q = query(collection(db!, `userRestaurants/${userDbInfo?.id}/toTry`));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -40,11 +43,13 @@ const _layout = () => {
         console.log("User to try restaurants retrieved");
       });
     });
-
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
+    if (!userDbInfo) return;
+    setUserTriedRestaurants([]);
+
     let db = getDb();
     const q = query(collection(db!, `userRestaurants/${userDbInfo?.id}/tried`));
     const unsubscribe = onSnapshot(q, (snapshot) => {

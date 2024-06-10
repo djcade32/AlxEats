@@ -5,44 +5,26 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Font from "@/constants/Font";
 import { RestaurantItem } from "@/interfaces";
-import { checkIfRestaurantInList, getDb, restaurantAdded, restaurantRemoved } from "@/firebase";
-import { getAuth } from "firebase/auth";
+import { restaurantAdded, restaurantRemoved } from "@/firebase";
 import { useAppStore } from "@/store/app-storage";
-import { collection, onSnapshot, query } from "firebase/firestore";
 
 interface ListingsRestaurantItemProps {
   restaurant: RestaurantItem;
   ranking?: boolean;
+  isToTry?: boolean;
 }
 
-const ListingsRestaurantItem = ({ restaurant, ranking = false }: ListingsRestaurantItemProps) => {
+const ListingsRestaurantItem = ({
+  restaurant,
+  ranking = false,
+  isToTry,
+}: ListingsRestaurantItemProps) => {
   const router = useRouter();
-  const { authUser, userDbInfo, userToTryRestaurants, userTriedRestaurants } = useAppStore();
+  const { authUser, userToTryRestaurants, userTriedRestaurants, userDbInfo } = useAppStore();
 
   const { width } = useWindowDimensions();
-  const [isToTry, setIsToTry] = useState(false);
   const [rankingValue, setRankingValue] = useState<number | null>(null);
   const TEXT_AVAILABLE_WIDTH = width - 130;
-
-  // useEffect(() => {
-  //   if (!authUser?.uid || !restaurant.placeId) return;
-  //   (async () => {
-  //     try {
-  //       await checkIfRestaurantInList(authUser.uid, restaurant.placeId, "TO_TRY").then((result) => {
-  //         setIsToTry(!!result);
-  //       });
-  //       await checkIfRestaurantInList(authUser.uid, restaurant.placeId, "TRIED").then((result) => {
-  //         setRankingValue(result?.ranking);
-  //       });
-  //     } catch (error) {
-  //       console.log("Error checking performing restaurant checks: ", error);
-  //     }
-  //   })();
-  // }, [authUser, restaurant]);
-
-  useEffect(() => {
-    setIsToTry(userToTryRestaurants.includes(restaurant.placeId));
-  }, [userToTryRestaurants]);
 
   useEffect(() => {
     const ranking = userTriedRestaurants.find((r) => r.id === restaurant.placeId)?.ranking;
@@ -71,11 +53,15 @@ const ListingsRestaurantItem = ({ restaurant, ranking = false }: ListingsRestaur
     try {
       if (isToTry) {
         await restaurantRemoved(authUser.uid, restaurant.placeId, "TO_TRY");
-        setIsToTry(false);
         return;
       }
-      await restaurantAdded(authUser.uid, restaurant.placeId, "TO_TRY");
-      setIsToTry(true);
+      await restaurantAdded(
+        authUser.uid,
+        userDbInfo?.firstName!,
+        restaurant.name,
+        restaurant.placeId,
+        "TO_TRY"
+      );
     } catch (error) {
       console.log("Error adding or removing restaurant to to try list: ", error);
     }

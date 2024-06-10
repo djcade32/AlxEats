@@ -31,9 +31,16 @@ import {
 import firebase from "firebase/compat/app";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { FetchUsersPayload, RestaurantItem, RestaurantRankingPayload, User } from "./interfaces";
-import { UserRestaurantsList } from "./types";
+import {
+  FeedPost,
+  FetchUsersPayload,
+  RestaurantItem,
+  RestaurantRankingPayload,
+  User,
+} from "./interfaces";
+import { PostActivityTypes, UserRestaurantsList } from "./types";
 import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
+import { v4 } from "uuid";
 
 export let app: FirebaseApp | null = null;
 export let auth: Auth | null = null;
@@ -83,11 +90,7 @@ export const signUpUser = async (auth: Auth, email: string, password: string) =>
     });
 };
 
-export const createAccount = async (
-  email: string,
-  password: string
-  // fullName: string
-): Promise<void> => {
+export const createAccount = async (email: string, password: string): Promise<void> => {
   console.log("Creating new account");
   if (!getAuth()) {
     console.log("ERROR: There was a problem getting Firebase auth.");
@@ -95,8 +98,6 @@ export const createAccount = async (
   }
   try {
     const userCredential = await createUserWithEmailAndPassword(getAuth(), email, password);
-    // updateProfile(userCredential.user!, { displayName: fullName });
-    console.log("User created: ", userCredential.user);
     await sendEmailVerificationFirebase(userCredential.user);
     return Promise.resolve();
   } catch (error) {
@@ -227,6 +228,8 @@ export const getUserById = async (id: string): Promise<User | null> => {
 
 export const restaurantAdded = async (
   userId: string,
+  firstName: string,
+  restaurantName: string,
   restaurantId: string,
   list: UserRestaurantsList,
   RestaurantRankingPayload?: RestaurantRankingPayload
@@ -257,6 +260,77 @@ export const restaurantAdded = async (
     { merge: true }
   );
   console.log(`Restaurant ${restaurantId} added to ${list} list for user ${userId}`);
+  //TODO: Create post to show in feed
+  const content = `${firstName} ${list === "TO_TRY" ? "wants to try" : "scored"} ${restaurantName}`;
+  await createPost(
+    userId,
+    restaurantId,
+    list === "TO_TRY" ? "TO_TRY_POST" : "TRIED_POST",
+    content,
+    RestaurantRankingPayload
+  );
+  return Promise.resolve();
+};
+
+export const createPost = async (
+  userId: string,
+  restaurantId: string,
+  activityType: PostActivityTypes,
+  content: string,
+  restaurantRankingPayload?: RestaurantRankingPayload
+): Promise<void> => {
+  const db = getDb();
+  if (!db) {
+    return Promise.reject("Error: Database not found");
+  }
+  if (!userId || !restaurantId || !activityType || !content)
+    return Promise.reject("Error: Missing user or restaurant id or activity type or content");
+  if (activityType === "TRIED_POST" && !restaurantRankingPayload)
+    return Promise.reject("Error: Missing RestaurantRankingPayload for tried post");
+
+  const activityId = v4();
+  const dbUrl = `feed/${activityId}`;
+  const userRef = doc(db, dbUrl);
+  const docSnap = await getDoc(userRef);
+
+  let length = 0;
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    length = data.data.length;
+  }
+
+  const post: FeedPost = restaurantRankingPayload
+    ? {
+        restaurantId,
+        comment: restaurantRankingPayload.comment,
+        photos: restaurantRankingPayload.photos,
+        ranking: restaurantRankingPayload.ranking,
+        activityType,
+        userId,
+        content,
+        activityId,
+        createdAt: new Date(),
+        likes: [],
+        shares: [],
+      }
+    : {
+        restaurantId,
+        activityType,
+        userId,
+        activityId,
+        content,
+        createdAt: new Date(),
+        likes: [],
+        shares: [],
+      };
+  await setDoc(
+    userRef,
+    {
+      data: arrayUnion(post),
+    },
+    { merge: true }
+  );
+  console.log(`Post created for user ${userId}`);
   return Promise.resolve();
 };
 

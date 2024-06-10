@@ -10,6 +10,7 @@ import { useFilterStore } from "@/store/filter-storage";
 
 const cuisinesFilter = () => {
   const router = useRouter();
+  const { restaurantListFilter } = useFilterStore();
   const [cuisines, setCuisines] = useState<string[]>([]);
   const [searchText, setSearchText] = useState("");
   const [filteredCuisines, setFilteredCuisines] = useState<string[]>(Cuisines);
@@ -17,7 +18,7 @@ const cuisinesFilter = () => {
 
   useEffect(() => {
     setCuisines(currentCuisineFilter);
-  }, []);
+  }, [currentCuisineFilter]);
 
   useEffect(() => {
     if (searchText === "") {
@@ -94,7 +95,7 @@ const cuisinesFilter = () => {
           </View>
         </View>
         <FlatList
-          contentContainerStyle={{ gap: 15 }}
+          contentContainerStyle={{ gap: 15, paddingBottom: 50 }}
           data={filteredCuisines}
           renderItem={({ item }) => (
             <TouchableOpacity

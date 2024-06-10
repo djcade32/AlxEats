@@ -139,3 +139,7 @@ export function wait(seconds: number) {
     setTimeout(resolve, seconds * 1000);
   });
 }
+
+export const isNumeric = (char: string) => {
+  return !isNaN(Number(char));
+};

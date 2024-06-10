@@ -4,7 +4,7 @@ import ListingsScreenHeader from "@/components/ListingsScreenHeader";
 import ListingsMemberItem from "@/components/ListingsMemberItem";
 import ListingsRestaurantItem from "@/components/ListingsRestaurantItem";
 import { useRouter } from "expo-router";
-import { FetchUsersPayload, RestaurantItem } from "@/interfaces";
+import { FetchUsersPayload, RestaurantItem, User } from "@/interfaces";
 import * as Location from "expo-location";
 import { FlatList } from "react-native-gesture-handler";
 import Colors from "@/constants/Colors";
@@ -14,21 +14,19 @@ import { getAuth } from "firebase/auth";
 import { distanceBetweenCoordinates } from "@/common-utils";
 import { useAppStore } from "@/store/app-storage";
 
-//TODO: What you could do is create to FlatLists, one for members and one for restaurants and
-//show/hide them based on the viewMembers state
-
 const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
 const search = () => {
   const router = useRouter();
   const debounceTimeout = useRef<any>(null);
-  const { authUser } = useAppStore();
+  const { authUser, userToTryRestaurants, userTriedRestaurants } = useAppStore();
 
   const [searchText, setSearchText] = useState("");
   const [viewMembers, setViewMembers] = useState(0);
-  const [data, setData] = useState<any>([]);
+  const [restaurantData, setRestaurantData] = useState<any>([]);
+  const [filteredRestaurantData, setFilteredRestaurantData] = useState<any>([]);
   const [allUsersPagination, setAllUsersPagination] = useState<FetchUsersPayload | null>(null);
-  const [filteredData, setFilteredData] = useState<any>([]);
+  const [filteredAllUser, setFilteredAllUsers] = useState<User[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [pageToken, setPageToken] = useState<string | null>(null);
   const [flatListHeight, setFlatListHeight] = useState(0);
@@ -38,6 +36,7 @@ const search = () => {
     // Fetch all users
     fetchUsers().then((users) => {
       setAllUsersPagination(users);
+      setFilteredAllUsers(users.data);
     });
   }, []);
 
@@ -53,11 +52,11 @@ const search = () => {
     if (!isViewingMembers) {
       fetchRestaurants();
     } else {
-      setData(allUsersPagination?.data || []);
-      setFilteredData(allUsersPagination?.data || []);
+      setAllUsersPagination(allUsersPagination);
+      setFilteredAllUsers(allUsersPagination?.data || []);
       setLoading(false);
     }
-  }, [viewMembers]);
+  }, []);
 
   // Update search results when search text changes
   useEffect(() => {
@@ -71,7 +70,7 @@ const search = () => {
         fetchRestaurants();
       } else {
         if (!searchText) {
-          setFilteredData(allUsersPagination?.data || []);
+          setFilteredAllUsers(allUsersPagination?.data || []);
         } else {
           searchUsers(searchText);
         }
@@ -134,8 +133,8 @@ const search = () => {
       setPageToken(data?.nextPageToken);
 
       if (!data || !data.places) {
-        setData([]);
-        setFilteredData([]);
+        setRestaurantData([]);
+        setFilteredRestaurantData([]);
         return;
       }
       data = data.places.map(
@@ -161,9 +160,8 @@ const search = () => {
             }),
           } as RestaurantItem)
       );
-
-      setData((prev: any) => (pageToken ? [...prev, ...data] : data));
-      setFilteredData((prev: any) => (pageToken ? [...prev, ...data] : data));
+      setRestaurantData((prev: any) => (pageToken ? [...prev, ...data] : data));
+      setFilteredRestaurantData((prev: any) => (pageToken ? [...prev, ...data] : data));
     } catch (error) {
       console.log("Error fetching restaurant: ", error);
     } finally {
@@ -174,12 +172,13 @@ const search = () => {
 
   const renderRowItem = ({ item }: any) => {
     if (item.email && item.email === getAuth().currentUser?.email) return null;
+    const isToTry = userToTryRestaurants.includes(item.placeId);
     return (
       <>
         {viewMembers ? (
           <ListingsMemberItem key={item.id} user={item} />
         ) : (
-          <ListingsRestaurantItem key={item.placeId} restaurant={item} />
+          <ListingsRestaurantItem key={item.placeId} restaurant={item} isToTry={isToTry} />
         )}
       </>
     );
@@ -187,6 +186,7 @@ const search = () => {
 
   const endOfListReached = async () => {
     // If the list is shorter than the flatlist, don't fetch more data
+    const data = viewMembers ? allUsersPagination?.data : restaurantData;
     const itemsHeight = data.length * 80;
     if (loading || data.length === 0 || itemsHeight < flatListHeight || fetchingMoreRestaurants)
       return;
@@ -210,7 +210,7 @@ const search = () => {
         user.lastName?.toLowerCase().includes(searchText.toLowerCase())
     );
     if (filtered.length === 0) return;
-    setFilteredData(filtered);
+    setFilteredAllUsers(filtered);
   };
 
   return (
@@ -233,23 +233,51 @@ const search = () => {
             <ActivityIndicator size="large" color={Colors.primary} />
           </View>
         ) : (
-          <FlatList
-            contentContainerStyle={[{ paddingTop: 75 }, !filteredData.length && { flex: 1 }]}
-            data={filteredData}
-            renderItem={renderRowItem}
-            keyExtractor={(item) => item.placeId}
-            showsVerticalScrollIndicator={false}
-            onLayout={(event) => setFlatListHeight(event.nativeEvent.layout.height)}
-            onEndReached={() => endOfListReached()}
-            onEndReachedThreshold={0.75}
-            ListEmptyComponent={() => (
-              <View style={styles.loadingScreen}>
-                <Text style={{ color: Colors.gray, fontSize: Font.medium }}>
-                  {viewMembers ? "No members found" : "No restaurants found"}
-                </Text>
-              </View>
+          <>
+            {viewMembers ? (
+              <FlatList
+                contentContainerStyle={[
+                  { paddingTop: 75 },
+                  !filteredAllUser?.length && { flex: 1 },
+                ]}
+                data={filteredAllUser}
+                renderItem={renderRowItem}
+                keyExtractor={(user: User) => user.id}
+                showsVerticalScrollIndicator={false}
+                onLayout={(event) => setFlatListHeight(event.nativeEvent.layout.height)}
+                onEndReached={() => endOfListReached()}
+                onEndReachedThreshold={0.75}
+                ListEmptyComponent={() => (
+                  <View style={styles.loadingScreen}>
+                    <Text style={{ color: Colors.gray, fontSize: Font.medium }}>
+                      No members found
+                    </Text>
+                  </View>
+                )}
+              />
+            ) : (
+              <FlatList
+                contentContainerStyle={[
+                  { paddingTop: 75 },
+                  !filteredRestaurantData.length && { flex: 1 },
+                ]}
+                data={filteredRestaurantData}
+                renderItem={renderRowItem}
+                keyExtractor={(item) => item.placeId}
+                showsVerticalScrollIndicator={false}
+                onLayout={(event) => setFlatListHeight(event.nativeEvent.layout.height)}
+                onEndReached={() => endOfListReached()}
+                onEndReachedThreshold={0.75}
+                ListEmptyComponent={() => (
+                  <View style={styles.loadingScreen}>
+                    <Text style={{ color: Colors.gray, fontSize: Font.medium }}>
+                      No restaurants found
+                    </Text>
+                  </View>
+                )}
+              />
             )}
-          />
+          </>
         )}
       </View>
     </View>
