@@ -104,8 +104,23 @@ const restaurantDetails = () => {
         setLoading(false);
       })();
     } else {
-      setRestaurant(JSON.parse(restaurantObj));
-      setLoading(false);
+      (async () => {
+        const restaurant = JSON.parse(restaurantObj);
+        setRestaurant(restaurant);
+        const resTried: RestaurantRankingPayload = await checkIfRestaurantInList(
+          userDbInfo!.id,
+          restaurant.placeId,
+          "TRIED"
+        );
+        if (resTried) {
+          setYourPhotos(resTried.photos || []);
+          updateComment(resTried.comment || "");
+          setRanking(resTried.ranking || 0);
+          setIsTried(true);
+        }
+        if (!resTried) setIsToTry(checkIfUserToTryRestaurant(restaurant.placeId));
+        setLoading(false);
+      })();
     }
   }, []);
 
@@ -383,7 +398,7 @@ const restaurantDetails = () => {
                 {isTried ? (
                   <Ionicons
                     name="checkmark-circle"
-                    size={35}
+                    size={40}
                     color={Colors.primary}
                     style={{ opacity: 0.45 }}
                   />
