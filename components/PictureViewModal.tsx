@@ -1,14 +1,18 @@
 import Colors from "@/constants/Colors";
-import React from "react";
-import { View, StyleSheet, Image } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, StyleSheet, Image, ActivityIndicator, Text } from "react-native";
 import Modal from "react-native-modal";
 
 interface PictureViewModalProps {
   isModalVisible: boolean;
   toggleModal: () => void;
+  photoUrl: string | null;
 }
 
-const PictureViewModal = ({ isModalVisible, toggleModal }: PictureViewModalProps) => {
+const PictureViewModal = ({ isModalVisible, toggleModal, photoUrl }: PictureViewModalProps) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  if (!photoUrl) return;
+
   return (
     <Modal
       isVisible={isModalVisible}
@@ -20,10 +24,12 @@ const PictureViewModal = ({ isModalVisible, toggleModal }: PictureViewModalProps
       animationOutTiming={300}
     >
       <View style={styles.modal}>
-        <Image
-          source={require("@/assets/images/food-4.jpeg")}
-          style={{ height: 300, width: 300, borderRadius: 5, marginTop: 10, aspectRatio: 1 }}
-        />
+        {!isLoaded && (
+          <View style={{ position: "absolute", top: 150 }}>
+            <ActivityIndicator size="large" color={Colors.lightGray} />
+          </View>
+        )}
+        <Image onLoad={() => setIsLoaded(true)} source={{ uri: photoUrl }} style={styles.image} />
       </View>
     </Modal>
   );
@@ -33,9 +39,15 @@ export default PictureViewModal;
 
 const styles = StyleSheet.create({
   modal: {
-    // backgroundColor: "white",
-    // padding: 20,
     borderRadius: 10,
     alignItems: "center",
+    position: "relative",
+  },
+  image: {
+    height: 300,
+    width: 300,
+    borderRadius: 5,
+    marginTop: 10,
+    aspectRatio: 1,
   },
 });

@@ -8,3 +8,11 @@ export enum SignInMethods {
   Apple = "Apple",
   Google = "Google",
 }
+
+export enum RestaurantCriteriaEnums {
+  TASTE = "Taste",
+  SERVICE = "Service",
+  ATMOSPHERE = "Atmosphere",
+  PRICE = "Price",
+  OVERALL_EXPERIENCE = "Overall Experience",
+}

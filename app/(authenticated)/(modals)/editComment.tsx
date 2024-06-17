@@ -7,25 +7,31 @@ import {
   View,
   ScrollView,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import Colors from "@/constants/Colors";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Font from "@/constants/Font";
-
-const DummyText =
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
+import { useRestaurantRankingStore } from "@/store/restaurantRanking-storage";
+import { updateRestaurantComment } from "@/firebase";
+import { useAppStore } from "@/store/app-storage";
 
 const editComment = () => {
+  let restaurantId = useLocalSearchParams<any>().restaurantId as any;
+
+  const { comment, updateComment } = useRestaurantRankingStore();
   const router = useRouter();
+  const { userDbInfo } = useAppStore();
   const { height } = Dimensions.get("window");
-  const [comment, setComment] = useState(DummyText);
+  const [commentDraft, setCommentDraft] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollViewRef = useRef<ScrollView | null>(null);
   const textInputRef = useRef<TextInput | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Get keyboard height
   useEffect(() => {
@@ -39,6 +45,8 @@ const editComment = () => {
     const keyboardDidHideListener = Keyboard.addListener("keyboardDidHide", () => {
       setKeyboardHeight(0);
     });
+
+    setCommentDraft(comment);
 
     return () => {
       keyboardDidShowListener.remove();
@@ -62,6 +70,15 @@ const editComment = () => {
     scrollViewRef.current?.scrollTo({ y: height, animated: true });
   }
 
+  const hanleSavePressed = async () => {
+    //Save updated comment in db
+    setIsSaving(true);
+    updateComment(commentDraft);
+    await updateRestaurantComment(userDbInfo!.id, restaurantId, commentDraft);
+    setEditMode(false);
+    router.back();
+  };
+
   const OFFSET = 50;
 
   return (
@@ -74,6 +91,7 @@ const editComment = () => {
             <View style={styles.headerIconContainer}>
               {editMode ? (
                 <TouchableOpacity
+                  disabled={isSaving}
                   style={{ justifyContent: "center" }}
                   onPress={() => {
                     router.back();
@@ -83,7 +101,7 @@ const editComment = () => {
                   <Text style={{ color: Colors.error, fontSize: 18 }}>Cancel</Text>
                 </TouchableOpacity>
               ) : (
-                <TouchableOpacity onPress={() => router.back()}>
+                <TouchableOpacity disabled={isSaving} onPress={() => router.back()}>
                   <Ionicons name="chevron-back-circle-outline" size={30} color={Colors.black} />
                 </TouchableOpacity>
               )}
@@ -92,14 +110,15 @@ const editComment = () => {
           headerRight: () => (
             <View style={styles.headerIconContainer}>
               {editMode ? (
-                <TouchableOpacity
-                  onPress={() => {
-                    router.back();
-                    setEditMode(false);
-                  }}
-                >
-                  <Text style={{ color: Colors.primary, fontSize: 18 }}>Save</Text>
-                </TouchableOpacity>
+                <>
+                  {isSaving ? (
+                    <ActivityIndicator size={"small"} color={Colors.primary} />
+                  ) : (
+                    <TouchableOpacity onPress={hanleSavePressed}>
+                      <Text style={{ color: Colors.primary, fontSize: 18 }}>Save</Text>
+                    </TouchableOpacity>
+                  )}
+                </>
               ) : (
                 <TouchableOpacity
                   onPress={() => {
@@ -128,8 +147,8 @@ const editComment = () => {
         <TextInput
           ref={textInputRef}
           style={[styles.textInputContainer, { paddingBottom: isFocused ? 100 : 20 }]}
-          value={comment}
-          onChangeText={(text) => setComment(text)}
+          value={commentDraft}
+          onChangeText={(text) => setCommentDraft(text)}
           placeholder="Comments about the restaurant..."
           placeholderTextColor={Colors.gray}
           multiline

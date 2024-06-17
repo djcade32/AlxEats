@@ -7,13 +7,13 @@ import Post from "@/components/Post";
 const home = () => {
   return (
     <View style={styles.container}>
-      <FlatList
+      {/* <FlatList
         data={POST_DATA}
         contentContainerStyle={styles.flatListContainer}
         showsVerticalScrollIndicator={false}
         contentInset={{ top: 15, bottom: 20 }}
         renderItem={({ item }) => <Post post={item} />}
-      />
+      /> */}
     </View>
   );
 };

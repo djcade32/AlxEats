@@ -21,6 +21,9 @@ interface CustomTextInputProps {
   disabled?: boolean;
   autoFocus?: boolean;
   showErrorMessage?: boolean;
+  style?: StyleProp<ViewStyle>;
+  autoCapitalize?: "none" | "sentences" | "words" | "characters";
+  clearButtonMode?: "never" | "while-editing" | "unless-editing" | "always";
 }
 
 const CustomTextInput = ({
@@ -38,6 +41,9 @@ const CustomTextInput = ({
   disabled,
   autoFocus,
   showErrorMessage = true,
+  style,
+  autoCapitalize,
+  clearButtonMode,
 }: CustomTextInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isSecure, setIsSecure] = useState(false);
@@ -68,7 +74,7 @@ const CustomTextInput = ({
     onChange && onChange(text);
   };
   return (
-    <View style={{ flex: 1 }}>
+    <View style={style}>
       <View style={[styles.container, { borderColor: getBorderColor() }, customStyles]}>
         {icon}
         <TextInput
@@ -89,6 +95,8 @@ const CustomTextInput = ({
           }}
           editable={!disabled}
           autoFocus={autoFocus}
+          autoCapitalize={autoCapitalize}
+          clearButtonMode={clearButtonMode}
         />
         <TouchableWithoutFeedback onPress={() => setIsSecure(!isSecure)}>
           {password && (
@@ -127,7 +135,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     paddingLeft: 10,
-    flex: 1,
   },
   textInput: {
     flex: 1,

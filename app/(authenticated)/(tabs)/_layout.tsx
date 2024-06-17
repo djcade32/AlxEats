@@ -1,13 +1,21 @@
 import { Image, Text, TouchableOpacity, View } from "react-native";
-import React, { useEffect } from "react";
-import { Stack, Tabs } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Stack, Tabs, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import CustomHeader from "@/components/CustomHeader";
 import CustomAuthenticatedHeader from "@/components/CustomAuthenticatedHeader";
 import * as Location from "expo-location";
+import { getAuth } from "firebase/auth";
+import { getDb } from "@/firebase";
+import { collection, getDocs, query, where } from "firebase/firestore";
 
 const Layout = () => {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const db = getDb();
+
+  // if (isLoading) return <Text style={{ paddingTop: 30 }}>Loading...</Text>;
   useEffect(() => {
     getLocationAsync();
   }, []);
@@ -29,6 +37,7 @@ const Layout = () => {
       // You may handle errors related to location access here
     }
   };
+
   return (
     <Tabs
       initialRouteName="home"

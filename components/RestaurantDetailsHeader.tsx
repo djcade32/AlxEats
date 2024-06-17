@@ -19,9 +19,7 @@ const RestaurantDetailsHeader = ({ headerLeft, headerRight }: RestaurantDetailsH
       options={{
         header: () => (
           <View style={[styles.container, { paddingTop: top }]}>
-            <View>
-              <TouchableOpacity onPress={() => router.back()}>{headerLeft}</TouchableOpacity>
-            </View>
+            <View>{headerLeft}</View>
 
             <View style={{ alignItems: "flex-end", flex: 1 }}>{headerRight}</View>
           </View>

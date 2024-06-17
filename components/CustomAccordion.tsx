@@ -1,39 +1,113 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  ScrollView,
-  Button,
-  TouchableOpacity,
-  SectionList,
-} from "react-native";
-import React, { useCallback, useState } from "react";
+import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
 import Accordion from "react-native-collapsible/Accordion";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
-import CustomButton from "./CustomButton";
-import { router } from "expo-router";
-import Cuisines from "@/data/Cuisines";
-import CustomTextInput from "./CustomTextInput";
+import { TextInput } from "react-native-gesture-handler";
+import Font from "@/constants/Font";
+import { RestaurantFilterSortByTypes, RestaurantFilterSortOrder } from "@/types";
+import { useFilterStore } from "@/store/filter-storage";
+import { RestaurantListFilterPayload } from "@/interfaces";
+import { isNumeric } from "@/common-utils";
 
 interface Section {
   icon: JSX.Element;
-  title: string;
+  title: JSX.Element | string;
   content: JSX.Element;
 }
 
 const THUMB_RADIUS_LOW = 12;
 const THUMB_RADIUS_HIGH = 16;
 
-const CustomAccordion = () => {
+interface CustomAccordionProps {
+  filterState: RestaurantListFilterPayload;
+  setFilterState: (filter: RestaurantListFilterPayload) => void;
+}
+
+const CustomAccordion = ({ filterState, setFilterState }: CustomAccordionProps) => {
+  const { updateRestaurantListFilter, restaurantListFilter } = useFilterStore();
   const [activeSections, setActiveSections] = useState<number[]>([]);
-  const [sortby, setSortby] = useState("Distance");
-  const [price, setPrice] = useState("");
-  const [score, setScore] = useState<number | null>(null);
-  const [searchText, setSearchText] = useState("");
-  const [cuisines, setCuisines] = useState<string[]>([]);
+  const [sortby, setSortby] = useState<RestaurantFilterSortByTypes>(restaurantListFilter.sortBy);
+  const [price, setPrice] = useState<string>(restaurantListFilter.priceMax);
+  // const [searchText, setSearchText] = useState("");
+  // const [cuisines, setCuisines] = useState<string[]>([]);
+  const [focusedInput, setFocusedInput] = useState<string>("");
+  const [minScore, setMinScore] = useState<number>(restaurantListFilter.scoreRange.min);
+  const [maxScore, setMaxScore] = useState<number>(restaurantListFilter.scoreRange.max);
+  const [sortOrder, setSortOrder] = useState<RestaurantFilterSortOrder>(
+    restaurantListFilter.sortOrder
+  );
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setSortby(filterState.sortBy);
+    setPrice(filterState.priceMax);
+    setSortOrder(filterState.sortOrder);
+    setMinScore(filterState.scoreRange.min);
+    setMaxScore(filterState.scoreRange.max);
+  }, [filterState]);
+
+  useMemo(() => {
+    if (minScore < 0) setMinScore(0);
+    if (maxScore > 100) setMaxScore(100);
+    if (minScore > maxScore) setMaxScore(minScore);
+    if (minScore > 100) setMinScore(99);
+    if (minScore === 0 && maxScore === 0) setMaxScore(100);
+  }, [focusedInput]);
+
+  useEffect(() => {
+    // if (loading) return;
+    setFilterState({
+      priceMax: price,
+      scoreRange: { min: minScore < 0 ? 0 : minScore, max: maxScore > 100 ? 100 : maxScore },
+      sortOrder: sortOrder,
+      sortBy: sortby,
+      cuisinesFilter: restaurantListFilter.cuisinesFilter,
+    });
+    setLoading(false);
+  }, [price, sortby, minScore, maxScore, sortOrder]);
 
   const sections: Section[] = [
+    {
+      icon: (
+        <MaterialCommunityIcons name="sort-alphabetical-variant" size={20} color={Colors.black} />
+      ),
+      title: "Sort order",
+      content: (
+        <>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <Text style={styles.textSmall}>Ascending</Text>
+            <TouchableOpacity onPress={() => setSortOrder("ASC")}>
+              <MaterialCommunityIcons
+                name={sortOrder === "ASC" ? "checkbox-intermediate" : "checkbox-blank-outline"}
+                size={30}
+                color={sortOrder === "ASC" ? Colors.primary : Colors.gray}
+              />
+            </TouchableOpacity>
+          </View>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <Text style={styles.textSmall}>Descending</Text>
+            <TouchableOpacity onPress={() => setSortOrder("DESC")}>
+              <MaterialCommunityIcons
+                name={sortOrder === "DESC" ? "checkbox-intermediate" : "checkbox-blank-outline"}
+                size={30}
+                color={sortOrder === "DESC" ? Colors.primary : Colors.gray}
+              />
+            </TouchableOpacity>
+          </View>
+        </>
+      ),
+    },
     {
       icon: <MaterialCommunityIcons name="sort" size={20} color={Colors.black} />,
       title: "Sort by",
@@ -89,7 +163,7 @@ const CustomAccordion = () => {
     },
     {
       icon: <Ionicons name="pricetag-outline" size={20} color={Colors.black} />,
-      title: "Price minimum",
+      title: "Price maximum",
       content: (
         <View style={{ flexDirection: "row", justifyContent: "space-around" }}>
           <TouchableOpacity
@@ -181,91 +255,59 @@ const CustomAccordion = () => {
     },
     {
       icon: <Ionicons name="stats-chart-outline" size={20} color={Colors.black} />,
-      title: "Score",
-      content: (
+      title: (
         <>
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text style={styles.textSmall}>0 - 2</Text>
-            <TouchableOpacity onPress={() => setScore((prev) => (prev === 0 ? null : 0))}>
-              <MaterialCommunityIcons
-                name={score === 0 ? "checkbox-intermediate" : "checkbox-blank-outline"}
-                size={30}
-                color={score === 0 ? Colors.primary : Colors.gray}
-              />
-            </TouchableOpacity>
-          </View>
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text style={styles.textSmall}>2 - 4</Text>
-            <TouchableOpacity onPress={() => setScore((prev) => (prev === 1 ? null : 1))}>
-              <MaterialCommunityIcons
-                name={score === 1 ? "checkbox-intermediate" : "checkbox-blank-outline"}
-                size={30}
-                color={score === 1 ? Colors.primary : Colors.gray}
-              />
-            </TouchableOpacity>
-          </View>
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text style={styles.textSmall}>4 - 6</Text>
-            <TouchableOpacity onPress={() => setScore((prev) => (prev === 2 ? null : 2))}>
-              <MaterialCommunityIcons
-                name={score === 2 ? "checkbox-intermediate" : "checkbox-blank-outline"}
-                size={30}
-                color={score === 2 ? Colors.primary : Colors.gray}
-              />
-            </TouchableOpacity>
-          </View>
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text style={styles.textSmall}>6 - 8</Text>
-            <TouchableOpacity onPress={() => setScore((prev) => (prev === 3 ? null : 3))}>
-              <MaterialCommunityIcons
-                name={score === 3 ? "checkbox-intermediate" : "checkbox-blank-outline"}
-                size={30}
-                color={score === 3 ? Colors.primary : Colors.gray}
-              />
-            </TouchableOpacity>
-          </View>
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text style={styles.textSmall}>8 - 10</Text>
-            <TouchableOpacity onPress={() => setScore((prev) => (prev === 4 ? null : 4))}>
-              <MaterialCommunityIcons
-                name={score === 4 ? "checkbox-intermediate" : "checkbox-blank-outline"}
-                size={30}
-                color={score === 4 ? Colors.primary : Colors.gray}
-              />
-            </TouchableOpacity>
-          </View>
+          <Text>Score</Text>{" "}
+          {activeSections.includes(2) && (
+            <Text style={[styles.textSmall, { color: Colors.gray, fontSize: Font.small }]}>
+              Must be between 0 and 100
+            </Text>
+          )}
         </>
       ),
+      content: (
+        <View style={{ gap: 10 }}>
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}
+          >
+            <Text style={styles.textSmall}>Min</Text>
+            <TextInput
+              selectTextOnFocus
+              placeholder="0"
+              keyboardType="numeric"
+              value={minScore.toString()}
+              style={[
+                styles.scoreRangeInput,
+                focusedInput === "min" && { borderColor: Colors.primary },
+              ]}
+              selectionColor={Colors.primary}
+              cursorColor={Colors.primary}
+              onChangeText={(text) => isNumeric(text) && setMinScore(Number(text))}
+              onFocus={() => setFocusedInput("min")}
+            />
+          </View>
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}
+          >
+            <Text style={styles.textSmall}>Max</Text>
+            <TextInput
+              selectTextOnFocus={true}
+              placeholder="100"
+              keyboardType="numeric"
+              value={maxScore.toString()}
+              style={[
+                styles.scoreRangeInput,
+                focusedInput === "max" && { borderColor: Colors.primary },
+              ]}
+              selectionColor={Colors.primary}
+              cursorColor={Colors.primary}
+              onChangeText={(text) => isNumeric(text) && setMaxScore(Number(text))}
+              onFocus={() => setFocusedInput("max")}
+            />
+          </View>
+        </View>
+      ),
     },
-    // {
-    //   icon: <Ionicons name="restaurant-outline" size={20} color={Colors.black} />,
-    //   title: "Cuisine",
-    //   content: (
-    //     <SectionList
-    //       showsVerticalScrollIndicator={false}
-    //       sections={CUISINES}
-    //       renderItem={({ item }) => (
-    //         <View key={item}>
-    //           <Text style={styles.textSmall}>{item}</Text>
-    //         </View>
-    //       )}
-    //       stickyHeaderIndices={[0]}
-    //       renderSectionHeader={() => (
-    //         <View style={{ backgroundColor: "white", paddingBottom: 10 }}>
-    //           <CustomTextInput
-    //             name="search"
-    //             placeholder="Search cuisine"
-    //             icon={<Ionicons name="search" size={18} color={Colors.gray} />}
-    //             value={searchText}
-    //             onChange={setSearchText}
-    //             customStyles={styles.searchInput}
-    //             showErrorMessage={false}
-    //           />
-    //         </View>
-    //       )}
-    //     />
-    //   ),
-    // },
   ];
 
   function renderHeader(section: Section, _: number, isActive: boolean) {
@@ -363,5 +405,15 @@ const styles = StyleSheet.create({
   searchInput: {
     backgroundColor: "white",
     flex: 1,
+  },
+
+  scoreRangeInput: {
+    width: 50,
+    height: 40,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: Colors.gray,
+    color: Colors.black,
+    textAlign: "center",
   },
 });

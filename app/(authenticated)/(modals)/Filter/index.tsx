@@ -4,36 +4,63 @@ import {
   TouchableOpacity,
   View,
   SafeAreaView,
-  Button,
   ScrollView,
-  SectionList,
   TouchableWithoutFeedback,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Stack, useRouter } from "expo-router";
 import Font from "@/constants/Font";
 import Colors from "@/constants/Colors";
 import CustomAccordion from "@/components/CustomAccordion";
 import CustomButton from "@/components/CustomButton";
-import Cuisines from "@/data/Cuisines";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useFilterStore } from "@/store/filter-storage";
+import { RestaurantListFilterPayload } from "@/interfaces";
 
-const CUISINES = [
-  {
-    title: "Cuisines",
-    data: Cuisines,
-  },
-];
+const INITIAL_FILTER_STATE: RestaurantListFilterPayload = {
+  priceMax: "",
+  scoreRange: { min: 0, max: 100 },
+  sortOrder: "ASC",
+  sortBy: "Distance",
+  cuisinesFilter: [],
+};
 
 const filter = () => {
   const router = useRouter();
+  const { restaurantListFilter, areFiltersEqual, updateRestaurantListFilter, updateCuisineFilter } =
+    useFilterStore();
+  const [filterState, setFilterState] = useState(restaurantListFilter);
+
   // Get the cuisines filter from the store
   const cuisines = useFilterStore((state) => state.cuisineFilter);
+
+  useEffect(() => {
+    setFilterState({ ...filterState, cuisinesFilter: cuisines });
+  }, [cuisines]);
 
   // Remove give cuisine from the filter
   const removeCuisineFromFilter = (cuisine: string) => {
     useFilterStore.getState().updateCuisineFilter(cuisines.filter((c) => c !== cuisine));
+  };
+
+  const handleCuisinesPress = () => {
+    router.push("/(authenticated)/(modals)/Filter/cuisinesFilter");
+  };
+
+  const handleBackPress = () => {
+    updateCuisineFilter(restaurantListFilter.cuisinesFilter);
+    router.back();
+  };
+
+  const handleResetFilterPress = () => {
+    setFilterState(INITIAL_FILTER_STATE);
+  };
+
+  const handleApplyFilterPress = () => {
+    let newCuisinesList =
+      cuisines.length > 0 && filterState.cuisinesFilter.length === 0 ? [] : cuisines;
+    updateRestaurantListFilter({ ...filterState, cuisinesFilter: newCuisinesList });
+    router.back();
   };
 
   return (
@@ -44,14 +71,14 @@ const filter = () => {
           headerTitleStyle: { fontFamily: "nm-b", fontSize: Font.medium },
           headerLeft: () => (
             <View style={styles.headerIconContainer}>
-              <TouchableOpacity onPress={() => router.back()}>
+              <TouchableOpacity onPress={handleBackPress}>
                 <Ionicons name="chevron-back-circle-outline" size={30} color={Colors.black} />
               </TouchableOpacity>
             </View>
           ),
           headerRight: () => (
             <View style={styles.headerIconContainer}>
-              <TouchableOpacity onPress={() => {}}>
+              <TouchableOpacity onPress={handleResetFilterPress}>
                 <Text style={{ color: Colors.primary, fontSize: 18 }}>Reset</Text>
               </TouchableOpacity>
             </View>
@@ -60,12 +87,10 @@ const filter = () => {
       ></Stack.Screen>
 
       <ScrollView style={{ flex: 1 }}>
-        <CustomAccordion />
+        <CustomAccordion filterState={filterState} setFilterState={setFilterState} />
 
         {/* Cuisines Button */}
-        <TouchableWithoutFeedback
-          onPress={() => router.push("/(authenticated)/(modals)/Filter/cuisinesFilter")}
-        >
+        <TouchableWithoutFeedback onPress={handleCuisinesPress}>
           <View style={styles.accordHeader}>
             <View style={{ flexDirection: "row", gap: 5, alignItems: "center" }}>
               <Ionicons name="restaurant-outline" size={20} color={Colors.black} />
@@ -90,9 +115,8 @@ const filter = () => {
         text="Apply filters"
         buttonStyle={styles.applyFilterButton}
         textStyle={{ color: "white", fontSize: 18 }}
-        onPress={() => {
-          router.back();
-        }}
+        onPress={handleApplyFilterPress}
+        disabled={areFiltersEqual(filterState)}
       />
     </SafeAreaView>
   );
