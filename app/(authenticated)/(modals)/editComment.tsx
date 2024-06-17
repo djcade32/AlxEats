@@ -70,13 +70,19 @@ const editComment = () => {
     scrollViewRef.current?.scrollTo({ y: height, animated: true });
   }
 
-  const hanleSavePressed = async () => {
+  const handleSavePressed = async () => {
     //Save updated comment in db
-    setIsSaving(true);
-    updateComment(commentDraft);
-    await updateRestaurantComment(userDbInfo!.id, restaurantId, commentDraft);
-    setEditMode(false);
-    router.back();
+    try {
+      setIsSaving(true);
+      updateComment(commentDraft);
+      // If user is updating an existing comment, use restaurantId to update the comment
+      if (restaurantId) await updateRestaurantComment(userDbInfo!.id, restaurantId, commentDraft);
+      setEditMode(false);
+      router.back();
+    } catch (error) {
+      console.log("Error updating/saving comment: ", error);
+      setIsSaving(false);
+    }
   };
 
   const OFFSET = 50;
@@ -114,7 +120,7 @@ const editComment = () => {
                   {isSaving ? (
                     <ActivityIndicator size={"small"} color={Colors.primary} />
                   ) : (
-                    <TouchableOpacity onPress={hanleSavePressed}>
+                    <TouchableOpacity onPress={handleSavePressed}>
                       <Text style={{ color: Colors.primary, fontSize: 18 }}>Save</Text>
                     </TouchableOpacity>
                   )}

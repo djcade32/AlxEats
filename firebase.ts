@@ -541,24 +541,6 @@ export const getUserRestaurantsTriedList = async (
   }
 };
 
-// export const getFollowings = async (userId: string): Promise<string[]> => {
-//   const db = getDb();
-//   if (!db) {
-//     return Promise.reject("Error: Database not found");
-//   }
-//   if (!userId) return Promise.reject("Error: Missing user id");
-//   const dbUrl = `feed`;
-//   const userRef = doc(db, dbUrl);
-//   const docSnap = await getDoc(userRef);
-//   if (docSnap.exists()) {
-//     const data = docSnap.data();
-//     return data.data;
-//   } else {
-//     console.log("Document does not exist");
-//     return []; // Document does not exist
-//   }
-// };
-
 export const getUserPosts = async (userId: string): Promise<FeedPost[]> => {
   try {
     const db = getDb();

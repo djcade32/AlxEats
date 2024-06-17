@@ -28,7 +28,12 @@ import { capitalizeFirstLetter, distanceBetweenCoordinates } from "@/common-util
 import openMap from "react-native-open-maps";
 import * as ExpoLinking from "expo-linking";
 import * as Location from "expo-location";
-import { checkIfRestaurantInList, updateRestaurantPhotos } from "@/firebase";
+import {
+  checkIfRestaurantInList,
+  restaurantAdded,
+  restaurantRemoved,
+  updateRestaurantPhotos,
+} from "@/firebase";
 import { useAppStore } from "@/store/app-storage";
 import { useRestaurantRankingStore } from "@/store/restaurantRanking-storage";
 import * as ImagePicker from "expo-image-picker";
@@ -48,7 +53,8 @@ const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 const restaurantDetails = () => {
   let restaurantObj = useLocalSearchParams<any>().restaurant as any;
   let restaurantId = useLocalSearchParams<any>().id as any;
-  const { userDbInfo, checkIfUserToTryRestaurant } = useAppStore();
+  const { userDbInfo, checkIfUserToTryRestaurant, userTriedRestaurants, userToTryRestaurants } =
+    useAppStore();
   const { updateComment, comment } = useRestaurantRankingStore();
   const router = useRouter();
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -59,8 +65,6 @@ const restaurantDetails = () => {
   const [ranking, setRanking] = useState<number | null>(null);
   const [isTried, setIsTried] = useState(false);
   const [isToTry, setIsToTry] = useState(false);
-  const [newAddedPhotots, setNewAddedPhotos] = useState<string[]>([]);
-  const [oldPhotos, setOldPhotos] = useState<string[]>([]);
 
   useEffect(() => {
     if (!restaurantObj) {
@@ -122,7 +126,7 @@ const restaurantDetails = () => {
         setLoading(false);
       })();
     }
-  }, []);
+  }, [userToTryRestaurants, userTriedRestaurants]);
 
   const HeaderComponent = useMemo(
     () => (
@@ -204,7 +208,6 @@ const restaurantDetails = () => {
   );
 
   const fetchRestaurant = async (placeId: string) => {
-    console.log("fetching restaurant with placeId: ", placeId);
     const url = `https://places.googleapis.com/v1/places/${placeId}`;
     const apiKey = GOOGLE_PLACES_API_KEY;
 
@@ -334,8 +337,38 @@ const restaurantDetails = () => {
       const updatedPhotos = [...images, ...yourPhotos];
       await updateRestaurantPhotos(userDbInfo!.id, restaurant!.placeId, updatedPhotos);
       setYourPhotos(updatedPhotos);
-      setNewAddedPhotos(images);
     }
+  };
+
+  const handleToTryPress = async () => {
+    if (!userDbInfo || !restaurant) return;
+
+    try {
+      if (isToTry) {
+        setIsToTry(false);
+        await restaurantRemoved(userDbInfo.id, restaurant.placeId, "TO_TRY");
+        return;
+      }
+      setIsToTry(true);
+      await restaurantAdded(
+        userDbInfo.id,
+        userDbInfo?.firstName!,
+        restaurant.name,
+        restaurant.address,
+        restaurant.placeId,
+        "TO_TRY"
+      );
+    } catch (error) {
+      console.log("Error adding or removing restaurant to to try list: ", error);
+    }
+  };
+
+  const handleTriedPress = async () => {
+    if (!restaurant) return;
+    router.push({
+      pathname: "/(authenticated)/(modals)/RankRestaurant/",
+      params: { restaurant: JSON.stringify(restaurant), isToTry: `${isToTry}` },
+    });
   };
 
   return (
@@ -400,14 +433,14 @@ const restaurantDetails = () => {
                     name="checkmark-circle"
                     size={40}
                     color={Colors.primary}
-                    style={{ opacity: 0.45 }}
+                    style={{ opacity: 0.75 }}
                   />
                 ) : (
                   <View style={{ flexDirection: "row", gap: 5 }}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={handleTriedPress}>
                       <Ionicons name="add-circle-outline" size={40} color={Colors.primary} />
                     </TouchableOpacity>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={handleToTryPress}>
                       <Ionicons
                         name={isToTry ? "bookmark" : "bookmark-outline"}
                         size={40}

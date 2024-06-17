@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Font from "@/constants/Font";
 import { RestaurantItem } from "@/interfaces";
-import { restaurantAdded, restaurantRemoved } from "@/firebase";
+import { removePost, restaurantAdded, restaurantRemoved } from "@/firebase";
 import { useAppStore } from "@/store/app-storage";
 
 interface ListingsRestaurantItemProps {
@@ -53,6 +53,7 @@ const ListingsRestaurantItem = ({
     try {
       if (isToTry) {
         await restaurantRemoved(authUser.uid, restaurant.placeId, "TO_TRY");
+        await removePost(authUser.uid, restaurant.placeId);
         return;
       }
       await restaurantAdded(

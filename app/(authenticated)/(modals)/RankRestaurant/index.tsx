@@ -28,7 +28,6 @@ const initialOptionsState: Record<RestaurantCriteriaTypes, number> = {
 const rankRestaurant = () => {
   const restaurantObj = JSON.parse(useLocalSearchParams().restaurant as any);
   const isToTry = JSON.parse(useLocalSearchParams().isToTry as any) as Boolean;
-  const postId = useLocalSearchParams().postId as string;
 
   const router = useRouter();
   const { userDbInfo } = useAppStore();
