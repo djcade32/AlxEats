@@ -5,12 +5,15 @@ import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import Font from "@/constants/Font";
 import { getAuth, signOut } from "firebase/auth";
+import { useAppStore } from "@/store/app-storage";
 
 const settings = () => {
+  const { clearStore } = useAppStore();
   const router = useRouter();
   const signUserOut = async () => {
     try {
       await signOut(getAuth());
+      // clearStore();
     } catch (error) {
       console.log("ERROR: There was a problem signing out: ", error);
     }

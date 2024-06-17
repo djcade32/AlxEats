@@ -83,9 +83,10 @@ export interface FeedPost {
   ranking?: number;
   activityType: PostActivityTypes;
   userId: string;
-  content: string;
+  restaurantName: string;
+  restaurantLocation: string;
   activityId: string;
-  createdAt: Date;
+  createdAt: string;
   likes: string[];
   shares: string[];
 }

@@ -15,6 +15,7 @@ import {
   FieldValue,
   arrayRemove,
   getDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import {
   Auth,
@@ -146,6 +147,16 @@ export const addUserToFirebase = async (user: User): Promise<void> => {
     await setDoc(doc(db, "users", user.id), {
       ...user,
     });
+    await setDoc(doc(db, "followings", user.id), {
+      following: [],
+      followedBy: [],
+    });
+    await setDoc(doc(db, `userRestaurants/${user.id}/toTry`, "data"), {
+      data: [],
+    });
+    await setDoc(doc(db, `userRestaurants/${user.id}/tried`, "data"), {
+      data: [],
+    });
     console.log("User added to firebase database: ", user);
     return Promise.resolve();
   } catch (err: any) {
@@ -230,6 +241,7 @@ export const restaurantAdded = async (
   userId: string,
   firstName: string,
   restaurantName: string,
+  restaurantLocation: string,
   restaurantId: string,
   list: UserRestaurantsList,
   RestaurantRankingPayload?: RestaurantRankingPayload
@@ -260,44 +272,124 @@ export const restaurantAdded = async (
     { merge: true }
   );
   console.log(`Restaurant ${restaurantId} added to ${list} list for user ${userId}`);
-  //TODO: Create post to show in feed
-  const content = `${firstName} ${list === "TO_TRY" ? "wants to try" : "scored"} ${restaurantName}`;
   await createPost(
     userId,
     restaurantId,
     list === "TO_TRY" ? "TO_TRY_POST" : "TRIED_POST",
-    content,
+    firstName,
+    restaurantName,
+    restaurantLocation,
     RestaurantRankingPayload
   );
   return Promise.resolve();
+};
+
+export const updateRestaurantComment = async (
+  userId: string,
+  restaurantId: string,
+  updatedComment: string
+): Promise<void> => {
+  try {
+    const db = getDb();
+    if (!db) {
+      return Promise.reject("Error: Database not found");
+    }
+    if (!userId || !updatedComment || !restaurantId)
+      return Promise.reject("Error: Missing user id or restaurantId or updatedComment");
+    const dbUrl = `userRestaurants/${userId}/tried/data`;
+    const userRef = doc(db, dbUrl);
+    const docSnap = await getDoc(userRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const triedRestaurants = data.data;
+      const updatedTriedRestaurants = triedRestaurants.map(
+        (restaurant: RestaurantRankingPayload) => {
+          if (restaurantId === restaurant.id) {
+            console.log(`Restaurant ${restaurant.id} updated for user ${userId}`);
+            return { ...restaurant, comment: updatedComment };
+          }
+          return restaurant;
+        }
+      );
+      await setDoc(userRef, {
+        data: updatedTriedRestaurants,
+      });
+      return Promise.resolve();
+    } else {
+      console.log("Document does not exist");
+      return Promise.reject("Error: Document does not exist");
+    }
+  } catch (error) {
+    console.log("Error updating restaurant: ", error);
+    return Promise.reject(error);
+  }
+};
+
+// update restaurant photos
+export const updateRestaurantPhotos = async (
+  userId: string,
+  restaurantId: string,
+  updatedPhotos: string[]
+): Promise<void> => {
+  try {
+    const db = getDb();
+    if (!db) {
+      return Promise.reject("Error: Database not found");
+    }
+    if (!userId || !updatedPhotos || !restaurantId)
+      return Promise.reject("Error: Missing user id or restaurantId or updatedPhotos");
+    const dbUrl = `userRestaurants/${userId}/tried/data`;
+    const userRef = doc(db, dbUrl);
+    const docSnap = await getDoc(userRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const triedRestaurants = data.data;
+      const updatedTriedRestaurants = triedRestaurants.map(
+        (restaurant: RestaurantRankingPayload) => {
+          if (restaurantId === restaurant.id) {
+            console.log(`Restaurant ${restaurant.id} updated for user ${userId}`);
+            return { ...restaurant, photos: updatedPhotos };
+          }
+          return restaurant;
+        }
+      );
+      await setDoc(userRef, {
+        data: updatedTriedRestaurants,
+      });
+      return Promise.resolve();
+    } else {
+      console.log("Document does not exist");
+      return Promise.reject("Error: Document does not exist");
+    }
+  } catch (error) {
+    console.log("Error updating restaurant: ", error);
+    return Promise.reject(error);
+  }
 };
 
 export const createPost = async (
   userId: string,
   restaurantId: string,
   activityType: PostActivityTypes,
-  content: string,
+  firstName: string,
+  restaurantName: string,
+  restaurantLocation: string,
   restaurantRankingPayload?: RestaurantRankingPayload
 ): Promise<void> => {
   const db = getDb();
   if (!db) {
     return Promise.reject("Error: Database not found");
   }
-  if (!userId || !restaurantId || !activityType || !content)
-    return Promise.reject("Error: Missing user or restaurant id or activity type or content");
+  if (!userId || !restaurantId || !activityType || !firstName || !restaurantName)
+    return Promise.reject(
+      "Error: Missing user or restaurant id or activity type or firstName or restaurantName"
+    );
   if (activityType === "TRIED_POST" && !restaurantRankingPayload)
     return Promise.reject("Error: Missing RestaurantRankingPayload for tried post");
 
   const activityId = v4();
   const dbUrl = `feed/${activityId}`;
   const userRef = doc(db, dbUrl);
-  const docSnap = await getDoc(userRef);
-
-  let length = 0;
-  if (docSnap.exists()) {
-    const data = docSnap.data();
-    length = data.data.length;
-  }
 
   const post: FeedPost = restaurantRankingPayload
     ? {
@@ -307,9 +399,10 @@ export const createPost = async (
         ranking: restaurantRankingPayload.ranking,
         activityType,
         userId,
-        content,
+        restaurantName,
+        restaurantLocation,
         activityId,
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
         likes: [],
         shares: [],
       }
@@ -318,18 +411,13 @@ export const createPost = async (
         activityType,
         userId,
         activityId,
-        content,
-        createdAt: new Date(),
+        restaurantName,
+        restaurantLocation,
+        createdAt: new Date().toISOString(),
         likes: [],
         shares: [],
       };
-  await setDoc(
-    userRef,
-    {
-      data: arrayUnion(post),
-    },
-    { merge: true }
-  );
+  await setDoc(userRef, post, { merge: true });
   console.log(`Post created for user ${userId}`);
   return Promise.resolve();
 };
@@ -450,5 +538,255 @@ export const getUserRestaurantsTriedList = async (
   } else {
     console.log("Document does not exist");
     return []; // Document does not exist
+  }
+};
+
+// export const getFollowings = async (userId: string): Promise<string[]> => {
+//   const db = getDb();
+//   if (!db) {
+//     return Promise.reject("Error: Database not found");
+//   }
+//   if (!userId) return Promise.reject("Error: Missing user id");
+//   const dbUrl = `feed`;
+//   const userRef = doc(db, dbUrl);
+//   const docSnap = await getDoc(userRef);
+//   if (docSnap.exists()) {
+//     const data = docSnap.data();
+//     return data.data;
+//   } else {
+//     console.log("Document does not exist");
+//     return []; // Document does not exist
+//   }
+// };
+
+export const getUserPosts = async (userId: string): Promise<FeedPost[]> => {
+  try {
+    const db = getDb();
+    if (!db) {
+      return Promise.reject("Error: Database not found");
+    }
+    if (!userId) return Promise.reject("Error: Missing user id");
+
+    const q = query(
+      collection(db, "feed"),
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc")
+    );
+    const querySnapshot = await getDocs(q);
+    const posts: FeedPost[] = [];
+    querySnapshot.forEach((doc) => {
+      posts.push(doc.data() as FeedPost);
+    });
+    return posts;
+  } catch (error) {
+    return Promise.reject(error);
+  }
+};
+
+//Remove post from user's feed
+export const removePost = async (userId: string, restaurantId: string): Promise<void> => {
+  const db = getDb();
+  if (!db) {
+    return Promise.reject("Error: Database not found");
+  }
+  if (!userId || !restaurantId) return Promise.reject("Error: Missing user or restaurant id");
+  const q = query(
+    collection(db, "feed"),
+    where("userId", "==", userId),
+    where("restaurantId", "==", restaurantId)
+  );
+  const querySnapshot = await getDocs(q);
+  querySnapshot.forEach(async (doc) => {
+    await deleteDoc(doc.ref);
+  });
+
+  console.log(`Post ${restaurantId} removed from user ${userId}'s feed`);
+  return Promise.resolve();
+};
+
+// Follow user
+export const followUser = async (userId: string, followingId: string): Promise<void> => {
+  try {
+    const db = getDb();
+    if (!db) {
+      return Promise.reject("Error: Database not found");
+    }
+    if (!userId || !followingId) return Promise.reject("Error: Missing user or following id");
+    const dbUrl = `followings/${userId}`;
+    const userRef = doc(db, dbUrl);
+
+    await setDoc(
+      userRef,
+      {
+        following: arrayUnion(followingId),
+      },
+      { merge: true }
+    );
+    console.log(`User ${userId} followed user ${followingId}`);
+    await addUserToFollowedByList(followingId, userId);
+    return Promise.resolve();
+  } catch (error) {
+    console.log("Error following user: ", error);
+    return Promise.reject(error);
+  }
+};
+
+// Unfollow user
+export const unfollowUser = async (userId: string, followingId: string): Promise<void> => {
+  try {
+    const db = getDb();
+    if (!db) {
+      return Promise.reject("Error: Database not found");
+    }
+    if (!userId || !followingId) return Promise.reject("Error: Missing user or following id");
+    const dbUrl = `followings/${userId}`;
+    const userRef = doc(db, dbUrl);
+
+    await setDoc(
+      userRef,
+      {
+        following: arrayRemove(followingId),
+      },
+      { merge: true }
+    );
+    console.log(`User ${userId} unfollowed user ${followingId}`);
+    removeUserFromFollowedByList(followingId, userId);
+    return Promise.resolve();
+  } catch (error) {
+    console.log("Error unfollowing user: ", error);
+    return Promise.reject(error);
+  }
+};
+
+// Add user to followers list
+export const addUserToFollowedByList = async (
+  userId: string,
+  followerId: string
+): Promise<void> => {
+  try {
+    const db = getDb();
+    if (!db) {
+      return Promise.reject("Error: Database not found");
+    }
+    if (!userId || !followerId) return Promise.reject("Error: Missing user or follower id");
+    const dbUrl = `followings/${userId}`;
+    const userRef = doc(db, dbUrl);
+
+    await setDoc(
+      userRef,
+      {
+        followedBy: arrayUnion(followerId),
+      },
+      { merge: true }
+    );
+    console.log(`User ${userId} added to user ${followerId}'s followedBy list`);
+    return Promise.resolve();
+  } catch (error) {
+    console.log("Error adding user to followedBy list: ", error);
+    return Promise.reject(error);
+  }
+};
+
+// Remove user from followers list
+export const removeUserFromFollowedByList = async (
+  userId: string,
+  followerId: string
+): Promise<void> => {
+  try {
+    const db = getDb();
+    if (!db) {
+      return Promise.reject("Error: Database not found");
+    }
+    if (!userId || !followerId) return Promise.reject("Error: Missing user or follower id");
+    const dbUrl = `followings/${userId}`;
+    const userRef = doc(db, dbUrl);
+
+    await setDoc(
+      userRef,
+      {
+        followedBy: arrayRemove(followerId),
+      },
+      { merge: true }
+    );
+    console.log(`User ${userId} removed from user ${followerId}'s followedBy list`);
+    return Promise.resolve();
+  } catch (error) {
+    console.log("Error removing user from followedBy list: ", error);
+    return Promise.reject(error);
+  }
+};
+
+//Add like to post
+export const likePost = async (userId: string, postId: string): Promise<void> => {
+  try {
+    const db = getDb();
+    if (!db) {
+      return Promise.reject("Error: Database not found");
+    }
+    if (!userId || !postId) return Promise.reject("Error: Missing user or post id");
+    const dbUrl = `feed/${postId}`;
+    const userRef = doc(db, dbUrl);
+
+    await setDoc(
+      userRef,
+      {
+        likes: arrayUnion(userId),
+      },
+      { merge: true }
+    );
+    console.log(`User ${userId} liked post ${postId}`);
+    return Promise.resolve();
+  } catch (error) {
+    console.log("Error liking post: ", error);
+    return Promise.reject(error);
+  }
+};
+
+//Remove like from post
+export const removeLikePost = async (userId: string, postId: string): Promise<void> => {
+  try {
+    const db = getDb();
+    if (!db) {
+      return Promise.reject("Error: Database not found");
+    }
+    if (!userId || !postId) return Promise.reject("Error: Missing user or post id");
+    const dbUrl = `feed/${postId}`;
+    const userRef = doc(db, dbUrl);
+
+    await setDoc(
+      userRef,
+      {
+        likes: arrayRemove(userId),
+      },
+      { merge: true }
+    );
+    console.log(`User ${userId} removed like from post ${postId}`);
+    return Promise.resolve();
+  } catch (error) {
+    console.log("Error removing like from post: ", error);
+    return Promise.reject(error);
+  }
+};
+
+//Check if user liked post
+export const checkIfUserLikedPost = async (userId: string, postId: string): Promise<boolean> => {
+  try {
+    const db = getDb();
+    if (!db) {
+      return Promise.reject("Error: Database not found");
+    }
+    if (!userId || !postId) return Promise.reject("Error: Missing user or post id");
+    const dbUrl = `feed/${postId}`;
+    const userRef = doc(db, dbUrl);
+    const docSnap = await getDoc(userRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return data.likes.includes(userId);
+    } else {
+      console.log("Document does not exist");
+      return false; // Document does not exist
+    }
+  } catch (error: any) {
+    return Promise.reject(`Error: ${error.message}`);
   }
 };

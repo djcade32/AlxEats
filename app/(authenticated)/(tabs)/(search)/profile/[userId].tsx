@@ -1,105 +1,50 @@
-import { StyleSheet, Text, View, TouchableOpacity, Image, FlatList } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Image,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import { Stack, useLocalSearchParams } from "expo-router";
-import CustomAuthenticatedHeader from "@/components/CustomAuthenticatedHeader";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import Font from "@/constants/Font";
 import CustomHeader from "@/components/CustomHeader";
-import { User } from "@/interfaces";
-import { getUserById } from "@/firebase";
-import { AnimateStyle } from "react-native-reanimated";
+import { FeedPost, User } from "@/interfaces";
+import { getUserById, getUserPosts } from "@/firebase";
 import LoadingText from "@/components/LoadingText";
 import { getAuth } from "firebase/auth";
-
-const DummyData = [
-  {
-    userName: "Alice",
-    restaurantName: "Taste of Italy",
-    restaurantLocation: "Alexandria, VA",
-    numberOfLikes: 25,
-    restaurantRanking: 8.5,
-    timeElapsed: "2 hours ago",
-    picture: "https://randomuser.me/api/portraits/men/80.jpg",
-  },
-  {
-    userName: "Bob",
-    restaurantName: "Sushi World",
-    restaurantLocation: "Arlington, VA",
-    numberOfLikes: 12,
-    restaurantRanking: 9.0,
-    timeElapsed: "5 hours ago",
-    picture: "https://randomuser.me/api/portraits/women/39.jpg",
-  },
-  {
-    userName: "Charlie",
-    restaurantName: "Burger Bistro",
-    restaurantLocation: "Fairfax, VA",
-    numberOfLikes: 8,
-    restaurantRanking: 7.2,
-    timeElapsed: "1 day ago",
-    picture: "https://randomuser.me/api/portraits/men/22.jpg",
-  },
-  {
-    userName: "Emily",
-    restaurantName: "Taste of India",
-    restaurantLocation: "Springfield, VA",
-    numberOfLikes: 15,
-    restaurantRanking: 8.0,
-    timeElapsed: "3 hours ago",
-    picture: "https://randomuser.me/api/portraits/women/28.jpg",
-  },
-  {
-    userName: "David",
-    restaurantName: "Mexican Grill",
-    restaurantLocation: "Alexandria, VA",
-    numberOfLikes: 20,
-    restaurantRanking: 9.2,
-    timeElapsed: "1 day ago",
-    picture: "https://randomuser.me/api/portraits/men/70.jpg",
-  },
-  {
-    userName: "Ella",
-    restaurantName: "Seafood Shack",
-    restaurantLocation: "Arlington, VA",
-    numberOfLikes: 10,
-    restaurantRanking: 8.8,
-    timeElapsed: "6 hours ago",
-    picture: "https://randomuser.me/api/portraits/women/70.jpg",
-  },
-  {
-    userName: "Frank",
-    restaurantName: "Pizza Paradise",
-    restaurantLocation: "Fairfax, VA",
-    numberOfLikes: 18,
-    restaurantRanking: 7.5,
-    timeElapsed: "2 days ago",
-    picture: "https://randomuser.me/api/portraits/women/97.jpg",
-  },
-  {
-    userName: "Grace",
-    restaurantName: "Thai Treats",
-    restaurantLocation: "Alexandria, VA",
-    numberOfLikes: 22,
-    restaurantRanking: 9.5,
-    timeElapsed: "4 hours ago",
-    picture: "https://randomuser.me/api/portraits/men/97.jpg",
-  },
-];
+import Post from "@/components/Post";
 
 const profile = () => {
   let userId = JSON.parse(useLocalSearchParams<any>().userId as string);
   const [loading, setLoading] = useState(true);
   const [isCurrentUser, setIsCurrentUser] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [userPosts, setUserPosts] = useState<FeedPost[]>([]);
 
   useEffect(() => {
     setIsCurrentUser(userId === getAuth().currentUser?.uid);
-    getUserById(userId).then((user) => {
+    (async () => {
+      const user = await getUserById(userId);
       setUser(user);
-      setLoading(false);
-    });
+      getPosts(user).then(() => setTimeout(() => setLoading(false), 2000));
+    })();
   }, []);
+
+  const getPosts = async (user: User | null) => {
+    try {
+      if (!user) return console.log("User not found");
+      getUserPosts(user.id).then((posts) => {
+        setUserPosts([...posts]);
+      });
+    } catch (error) {
+      console.log("Error getting user posts: ", error);
+    }
+  };
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
       <Stack.Screen
@@ -185,128 +130,53 @@ const profile = () => {
           }}
         >
           <View style={{ alignItems: "center", flex: 1 }}>
-            <Text style={{ fontSize: 20, fontFamily: "nm-b" }}>408</Text>
+            {/* <Text style={{ fontSize: 20, fontFamily: "nm-b" }}>408</Text> */}
+            <LoadingText
+              title={"408"}
+              loading={loading}
+              textStyle={{ fontSize: 20, fontFamily: "nm-b" }}
+              containerStyle={{ height: 23, width: 25, borderRadius: 10 }}
+            />
             <Text style={{ color: Colors.gray }}>Followers</Text>
           </View>
           <View style={{ alignItems: "center", flex: 1 }}>
-            <Text style={{ fontSize: 20, fontFamily: "nm-b" }}>213</Text>
+            {/* <Text style={{ fontSize: 20, fontFamily: "nm-b" }}>213</Text> */}
+            <LoadingText
+              title={"213"}
+              loading={loading}
+              textStyle={{ fontSize: 20, fontFamily: "nm-b" }}
+              containerStyle={{ height: 23, width: 25, borderRadius: 10 }}
+            />
             <Text style={{ color: Colors.gray }}>Following</Text>
           </View>
           <View style={{ alignItems: "center", flex: 1 }}>
-            <Text style={{ fontSize: 20, fontFamily: "nm-b" }}>120</Text>
-            <Text style={{ color: Colors.gray }}>Rated</Text>
+            {/* <Text style={{ fontSize: 20, fontFamily: "nm-b" }}>{userPosts.length}</Text> */}
+            <LoadingText
+              title={userPosts.length.toString()}
+              loading={loading}
+              textStyle={{ fontSize: 20, fontFamily: "nm-b" }}
+              containerStyle={{ height: 23, width: 25, borderRadius: 10 }}
+            />
+            <Text style={{ color: Colors.gray }}>Scored</Text>
           </View>
         </View>
       </View>
       <FlatList
         showsVerticalScrollIndicator={false}
-        data={DummyData}
-        renderItem={({ item }) => (
-          <View style={styles.postContainer}>
-            <View style={{ flexDirection: "row", gap: 8 }}>
-              <TouchableOpacity
-                style={{ width: 62, height: 62, borderRadius: 31, overflow: "hidden" }}
-              >
-                <Image
-                  source={{ uri: item.picture }}
-                  style={{ height: 62, width: 62, resizeMode: "cover" }}
-                />
-              </TouchableOpacity>
-              <View style={{ flex: 1 }}>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    marginTop: 5,
-                    flex: 1,
-                    flexWrap: "wrap",
-                    gap: 2.5,
-                  }}
-                >
-                  <TouchableOpacity>
-                    <Text
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: Font.small,
-                        color: Colors.black,
-                      }}
-                    >
-                      {item.userName}{" "}
-                    </Text>
-                  </TouchableOpacity>
-                  <Text
-                    style={{
-                      fontSize: Font.small,
-                      color: Colors.black,
-                    }}
-                  >
-                    ranked{" "}
-                  </Text>
-                  <TouchableOpacity>
-                    <Text
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: Font.small,
-                        color: Colors.black,
-                      }}
-                    >
-                      {item.restaurantName}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                <Text style={{ fontSize: Font.extraSmall, color: Colors.gray, marginTop: 2 }}>
-                  {item.restaurantLocation}
-                </Text>
-              </View>
-
-              <View
-                style={{
-                  width: 45,
-                  height: 45,
-                  borderRadius: 22.5,
-                  borderColor: Colors.gray,
-                  borderWidth: 1,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Text style={{ fontSize: Font.small, color: Colors.secondary, fontWeight: "bold" }}>
-                  {item.restaurantRanking}
-                </Text>
-              </View>
-            </View>
-            <View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  marginBottom: 5,
-                  justifyContent: "space-between",
-                }}
-              >
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <TouchableOpacity style={{ flexDirection: "row", alignItems: "center" }}>
-                    <Ionicons name="heart-outline" size={30} color={Colors.black} />
-                    <Text>{item.numberOfLikes}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity>
-                    <Ionicons name="share-outline" size={30} color={Colors.black} />
-                  </TouchableOpacity>
-                </View>
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <TouchableOpacity>
-                    <Ionicons name="add-circle-outline" size={30} color={Colors.black} />
-                  </TouchableOpacity>
-                  <TouchableOpacity>
-                    <Ionicons name="bookmark-outline" size={30} color={Colors.black} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <Text style={{ fontSize: Font.extraSmall, color: Colors.gray }}>
-                {item.timeElapsed}
+        data={userPosts}
+        renderItem={({ item }) => <Post post={item} />}
+        contentContainerStyle={[styles.flatListContainer, userPosts.length === 0 && { flex: 1 }]}
+        ListEmptyComponent={
+          <View style={{ justifyContent: "center", alignItems: "center", flex: 1 }}>
+            {loading ? (
+              <ActivityIndicator color={Colors.primary} size={"small"} />
+            ) : (
+              <Text style={{ color: Colors.gray, fontSize: Font.medium }}>
+                This user has no posts
               </Text>
-            </View>
+            )}
           </View>
-        )}
+        }
       />
     </View>
   );
@@ -330,5 +200,11 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     alignSelf: "center",
     marginVertical: 15,
+  },
+
+  flatListContainer: {
+    alignItems: "center",
+    gap: 15,
+    paddingTop: 15,
   },
 });

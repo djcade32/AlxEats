@@ -1,10 +1,11 @@
 import { StyleSheet, Text, View, TouchableOpacity, Image } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Colors from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import Font from "@/constants/Font";
 import { User } from "@/interfaces";
-import profilePic from "@/app/(authenticated)/(onboarding)/profilePic";
+import { followUser, unfollowUser } from "@/firebase";
+import { useAppStore } from "@/store/app-storage";
 
 interface ListingsMemberItemProps {
   user: User;
@@ -13,9 +14,33 @@ interface ListingsMemberItemProps {
 
 const ListingsMemberItem = ({ user, ranking = false }: ListingsMemberItemProps) => {
   const router = useRouter();
+  const { userDbInfo, userFollowing } = useAppStore();
+  const [isFollowing, setIsFollowing] = useState(false);
 
   const handlPress = () => {
     router.push(`/(authenticated)/(tabs)/(search)/profile/${JSON.stringify(user.id)}`);
+  };
+
+  useEffect(() => {
+    //Determine if following user
+    setIsFollowing(!!userFollowing?.find((id) => id === user.id));
+  }, []);
+
+  const handleFollowPressed = async () => {
+    if (!userDbInfo) return;
+    try {
+      if (!isFollowing) {
+        setIsFollowing(true);
+        await followUser(userDbInfo.id, user.id);
+        return;
+      }
+      setIsFollowing(false);
+      unfollowUser(userDbInfo.id, user.id);
+    } catch (error) {
+      console.log("Error following user: ", error);
+      //Revert back
+      setIsFollowing(!isFollowing);
+    }
   };
   return (
     <>
@@ -47,8 +72,13 @@ const ListingsMemberItem = ({ user, ranking = false }: ListingsMemberItemProps) 
               <Text style={styles.rankingText}>7.0</Text>
             </View>
           ) : (
-            <TouchableOpacity style={styles.followButton}>
-              <Text style={styles.followText}>Follow</Text>
+            <TouchableOpacity
+              style={[styles.followButton, isFollowing && { backgroundColor: Colors.primary }]}
+              onPress={handleFollowPressed}
+            >
+              <Text style={[styles.followText, isFollowing && { color: "white" }]}>
+                {isFollowing ? "Following" : "Follow"}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -95,7 +125,9 @@ const styles = StyleSheet.create({
   followButton: {
     borderWidth: 1,
     borderColor: Colors.black,
-    paddingHorizontal: 25,
+    width: 100,
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 5,
     borderRadius: 25,
   },

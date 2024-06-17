@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Stack, useRouter } from "expo-router";
 import { getAuth } from "firebase/auth";
 import { checkIfEmailExists, getDb, getUserRestaurantsToTryList } from "@/firebase";
-import { collection, getDocs, onSnapshot, query, where } from "firebase/firestore";
+import { collection, doc, getDocs, onSnapshot, query, where } from "firebase/firestore";
 import CustomHeader from "@/components/CustomHeader";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
@@ -13,23 +13,12 @@ import { useAppStore } from "@/store/app-storage";
 const _layout = () => {
   const {
     userDbInfo,
-    setAuthUser,
-    setUserDbInfo,
     setUserToTryRestaurants,
     setUserTriedRestaurants,
+    setUserFollowers,
+    setUserFollowing,
   } = useAppStore();
   const [isLoading, setIsLoading] = useState(false);
-
-  // useEffect(() => {
-  //   if (isLoading) return;
-  //   setIsLoading(true);
-  //   (async () => {
-  //     if (userDbInfo) {
-  //       setUserToTryRestaurants(await getUserRestaurantsToTryList(userDbInfo.id));
-  //       console.log("User to try restaurants retrieved");
-  //     }
-  //   })();
-  // }, []);
 
   useEffect(() => {
     setUserToTryRestaurants([]);
@@ -44,7 +33,7 @@ const _layout = () => {
       });
     });
     return () => unsubscribe();
-  }, []);
+  }, [userDbInfo]);
 
   useEffect(() => {
     if (!userDbInfo) return;
@@ -54,13 +43,45 @@ const _layout = () => {
     const q = query(collection(db!, `userRestaurants/${userDbInfo?.id}/tried`));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
+        // Determine if the change is a new addition or a removal
         setUserTriedRestaurants(change.doc.data().data);
         console.log("User tried restaurants retrieved");
       });
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [userDbInfo]);
+
+  useEffect(() => {
+    if (!userDbInfo) return;
+
+    setUserFollowing([]);
+    let db = getDb();
+    const dbUrl = `followings/${userDbInfo?.id}`;
+    const userRef = doc(db!, dbUrl);
+    const unsubscribe = onSnapshot(userRef, (snapshot) => {
+      if (!snapshot.exists()) return;
+      setUserFollowing(snapshot.data().following);
+    });
+
+    return () => unsubscribe();
+  }, [userDbInfo]);
+
+  useEffect(() => {
+    if (!userDbInfo) return;
+
+    setUserFollowers([]);
+
+    let db = getDb();
+    const dbUrl = `followings/${userDbInfo?.id}`;
+    const userRef = doc(db!, dbUrl);
+    const unsubscribe = onSnapshot(userRef, (snapshot) => {
+      if (!snapshot.exists()) return;
+      setUserFollowers(snapshot.data().followedBy);
+    });
+
+    return () => unsubscribe();
+  }, [userDbInfo]);
 
   return (
     <Stack>

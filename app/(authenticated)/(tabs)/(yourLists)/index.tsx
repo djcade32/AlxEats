@@ -1,5 +1,5 @@
 import { ActivityIndicator, Button, StyleSheet, Text, View } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import ListingsBottomSheet from "@/components/ListingsBottomSheet";
 import ListingsMap from "@/components/ListingsMap";
@@ -30,7 +30,7 @@ const yourLists = () => {
   >([]);
   const [filteredToTryRestaurants, setFilteredToTryRestaurants] = useState<any[]>([]);
   const [originalToTryRestaurants, setOriginalToTryRestaurants] = useState<any[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
+  const [isEmptyData, setIsEmptyData] = useState(false);
 
   // Set data to show  based on toggle value
   useEffect(() => {
@@ -201,6 +201,12 @@ const yourLists = () => {
     viewToTry,
   ]);
 
+  useMemo(() => {
+    setIsEmptyData(
+      viewToTry ? filteredToTryRestaurants.length === 0 : filteredTriedRestaurants.length === 0
+    );
+  }, [viewToTry, filteredTriedRestaurants, filteredToTryRestaurants]);
+
   const getRestaurantPriceLevel = (price: string): string | undefined => {
     return restaurantPriceLevels[price as keyof typeof restaurantPriceLevels];
   };
@@ -345,6 +351,7 @@ const yourLists = () => {
             <ListingsBottomSheet
               isToggled={!!viewToTry}
               data={viewToTry ? filteredToTryRestaurants : filteredTriedRestaurants}
+              contentContainerStyle={isEmptyData && { flex: 1 }}
               renderRowItem={renderRowItem}
               ListHeaderComponent={() => (
                 <Text style={styles.bottomSheetHeader}>
@@ -352,8 +359,6 @@ const yourLists = () => {
                 </Text>
               )}
               loadingData={loading}
-              onEndReached={() => {}}
-              contentContainerStyle={{ flex: 1 }}
               emptyDataMessage={viewToTry ? "No restaurants to try" : "No restaurants tried"}
             />
           </>

@@ -143,3 +143,29 @@ export function wait(seconds: number) {
 export const isNumeric = (char: string) => {
   return !isNaN(Number(char));
 };
+
+export function formatTime(inputTime: string) {
+  const givenDate = new Date(inputTime) as any;
+  const currentDate = new Date() as any;
+
+  const timeDifference = currentDate - givenDate;
+  const hoursDifference = timeDifference / (1000 * 60 * 60);
+
+  if (hoursDifference > 24) {
+    // Format as "Month name and day of month"
+    const options = { month: "long", day: "numeric" };
+    return givenDate.toLocaleDateString("en-US", options);
+  } else {
+    // Format as time elapsed
+    const minutesDifference = timeDifference / (1000 * 60);
+    const secondsDifference = timeDifference / 1000;
+
+    if (hoursDifference >= 1) {
+      return `${Math.floor(hoursDifference)} hours ago`;
+    } else if (minutesDifference >= 1) {
+      return `${Math.floor(minutesDifference)} minutes ago`;
+    } else {
+      return `${Math.floor(secondsDifference)} seconds ago`;
+    }
+  }
+}

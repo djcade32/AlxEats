@@ -9,7 +9,7 @@ import {
   Linking,
   Alert,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { memo, useEffect, useMemo, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import RestaurantDetailsHeader from "@/components/RestaurantDetailsHeader";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -21,12 +21,17 @@ import { TouchableWithoutFeedback } from "react-native-gesture-handler";
 import PictureViewModal from "@/components/PictureViewModal";
 import { postData as USER_DATA } from "@/assets/data/dummyData";
 import ListingsMemberItem from "@/components/ListingsMemberItem";
-import { RestaurantItem } from "@/interfaces";
+import { RestaurantItem, RestaurantRankingPayload } from "@/interfaces";
 import { restaurantPriceLevels } from "@/mappings";
 import Cuisines from "@/data/Cuisines";
-import { capitalizeFirstLetter } from "@/common-utils";
+import { capitalizeFirstLetter, distanceBetweenCoordinates } from "@/common-utils";
 import openMap from "react-native-open-maps";
 import * as ExpoLinking from "expo-linking";
+import * as Location from "expo-location";
+import { checkIfRestaurantInList, updateRestaurantPhotos } from "@/firebase";
+import { useAppStore } from "@/store/app-storage";
+import { useRestaurantRankingStore } from "@/store/restaurantRanking-storage";
+import * as ImagePicker from "expo-image-picker";
 
 const UserDummyData = [
   {
@@ -38,21 +43,180 @@ const UserDummyData = [
 const DummyText =
   "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
+const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+
 const restaurantDetails = () => {
   let restaurantObj = useLocalSearchParams<any>().restaurant as any;
-
+  let restaurantId = useLocalSearchParams<any>().id as any;
+  const { userDbInfo, checkIfUserToTryRestaurant } = useAppStore();
+  const { updateComment, comment } = useRestaurantRankingStore();
   const router = useRouter();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [restaurant, setRestaurant] = useState<RestaurantItem | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [yourPhotos, setYourPhotos] = useState<string[]>([]);
+  const [ranking, setRanking] = useState<number | null>(null);
+  const [isTried, setIsTried] = useState(false);
+  const [isToTry, setIsToTry] = useState(false);
+  const [newAddedPhotots, setNewAddedPhotos] = useState<string[]>([]);
+  const [oldPhotos, setOldPhotos] = useState<string[]>([]);
 
   useEffect(() => {
-    setRestaurant(JSON.parse(restaurantObj));
-    setLoading(false);
-  }, [restaurantObj]);
+    if (!restaurantObj) {
+      (async () => {
+        let location = await Location.getCurrentPositionAsync({});
+
+        const data = await fetchRestaurant(JSON.parse(restaurantId));
+        const newRestaurant = {
+          placeId: data.id,
+          coordinate: {
+            latitude: data.location.latitude,
+            longitude: data.location.longitude,
+          },
+          name: data.displayName.text,
+          openNow: data.regularOpeningHours?.openNow,
+          price: data.priceLevel,
+          types: data.types,
+          primaryType: data.primaryType,
+          address: data.formattedAddress,
+          phoneNumber: data.nationalPhoneNumber,
+          website: data.websiteUri,
+          addressComponents: JSON.stringify(data.addressComponents),
+          distance: distanceBetweenCoordinates(location.coords, {
+            latitude: data.location.latitude,
+            longitude: data.location.longitude,
+          }),
+        };
+        setRestaurant(newRestaurant);
+        const resTried: RestaurantRankingPayload = await checkIfRestaurantInList(
+          userDbInfo!.id,
+          newRestaurant.placeId,
+          "TRIED"
+        );
+        if (resTried) {
+          setYourPhotos(resTried.photos || []);
+          updateComment(resTried.comment || "");
+          setRanking(resTried.ranking || 0);
+          setIsTried(true);
+        }
+        if (!resTried) setIsToTry(checkIfUserToTryRestaurant(newRestaurant.placeId));
+        setLoading(false);
+      })();
+    } else {
+      setRestaurant(JSON.parse(restaurantObj));
+      setLoading(false);
+    }
+  }, []);
+
+  const HeaderComponent = useMemo(
+    () => (
+      <View style={{ backgroundColor: "white" }}>
+        {/* Scores */}
+        <View style={{ paddingHorizontal: 10 }}>
+          <Text style={styles.sectionHeaderText}>Scores</Text>
+          <View style={{ flexDirection: "row", gap: 15 }}>
+            <View
+              style={{ flexDirection: "row", gap: 5, alignItems: "center", paddingVertical: 10 }}
+            >
+              <View style={styles.rankingCircle}>
+                <Text
+                  style={[styles.rankingText, { color: ranking ? Colors.secondary : Colors.black }]}
+                >
+                  {ranking ? ranking : "-"}
+                </Text>
+              </View>
+              <View>
+                <Text style={{ fontSize: Font.small, color: Colors.black }}>Your</Text>
+                <Text style={{ fontSize: Font.small, color: Colors.black }}>Score</Text>
+              </View>
+            </View>
+            <View
+              style={{ flexDirection: "row", gap: 5, alignItems: "center", paddingVertical: 10 }}
+            >
+              <View style={styles.rankingCircle}>
+                <Text style={[styles.rankingText, { color: Colors.black }]}>-</Text>
+              </View>
+              <View>
+                <Text style={{ fontSize: Font.small, color: Colors.black }}>Friend's</Text>
+                <Text style={{ fontSize: Font.small, color: Colors.black }}>Score</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+        {/* Your Photos */}
+        <View style={{ paddingLeft: 10 }}>
+          <Text style={styles.sectionHeaderText}>Your photos</Text>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <TouchableOpacity
+              style={styles.addPhotoButton}
+              onPress={() => handleAddPhotosPressed()}
+            >
+              <Ionicons name="add" size={25} color={Colors.black} />
+              <Text style={styles.addPhotoButtonText}>Add</Text>
+            </TouchableOpacity>
+            <FlatList
+              showsHorizontalScrollIndicator={false}
+              scrollEnabled={yourPhotos.length > 4}
+              contentContainerStyle={{ gap: 10, paddingRight: 10 }}
+              horizontal
+              data={yourPhotos}
+              renderItem={({ item }) => (
+                <TouchableWithoutFeedback key={item} onPress={() => handlePhotoPressed(item)}>
+                  <Image source={{ uri: item }} style={styles.photoContainer} />
+                </TouchableWithoutFeedback>
+              )}
+            />
+          </View>
+        </View>
+
+        {/* Comments */}
+        <View style={{ paddingHorizontal: 10, paddingVertical: 20 }}>
+          <Text style={styles.sectionHeaderText}>Comments</Text>
+
+          <TouchableWithoutFeedback onPress={() => handleCommentPress()}>
+            <Text
+              style={[styles.commentText, { color: comment ? Colors.black : Colors.gray }]}
+              numberOfLines={8}
+            >
+              {comment || "Comments about the restaurant..."}
+            </Text>
+          </TouchableWithoutFeedback>
+        </View>
+      </View>
+    ),
+    [yourPhotos, comment, ranking]
+  );
+
+  const fetchRestaurant = async (placeId: string) => {
+    console.log("fetching restaurant with placeId: ", placeId);
+    const url = `https://places.googleapis.com/v1/places/${placeId}`;
+    const apiKey = GOOGLE_PLACES_API_KEY;
+
+    const headers = {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask":
+        "displayName.text,types,nationalPhoneNumber,formattedAddress,addressComponents,location,websiteUri,regularOpeningHours.openNow,priceLevel,primaryType,id",
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: headers,
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.log("Error fetching restaurant: ", error);
+    }
+  };
 
   const handleCommentPress = () => {
-    router.push("/(authenticated)/(modals)/editComment");
+    router.push({
+      pathname: "/(authenticated)/(modals)/editComment",
+      params: { restaurantId: restaurant?.placeId },
+    });
   };
 
   const handleGetDirectionsPressed = () => {
@@ -92,7 +256,6 @@ const restaurantDetails = () => {
 
   const getRestaurantCuisine = (): string | undefined => {
     if (!restaurant?.types) return;
-    console.log(restaurant.phoneNumber);
     for (let cuisine of Cuisines) {
       if (restaurant.types.includes(`${cuisine}_restaurant`)) {
         return capitalizeFirstLetter(cuisine);
@@ -119,10 +282,55 @@ const restaurantDetails = () => {
     return infoString;
   };
 
+  const handlePhotoPressed = (photoUrl: string) => {
+    setIsModalVisible(true);
+    setSelectedPhoto(photoUrl);
+  };
+
+  const handleBackPressed = () => {
+    router.back();
+    updateComment("");
+  };
+
+  const handleAddPhotosPressed = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      console.log("Permission to access camera roll is required!");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      aspect: [1, 1],
+      quality: 0.5,
+      allowsMultipleSelection: true,
+      selectionLimit: 6,
+    });
+
+    if (!result.canceled) {
+      let images = [];
+      if (result.assets.length + yourPhotos.length > 6) {
+        console.log("You can only select up to 6 images");
+        Alert.alert("You can only select up to 6 images");
+        return;
+      }
+      for (const asset of result.assets) {
+        images.push(asset.uri);
+      }
+      const updatedPhotos = [...images, ...yourPhotos];
+      await updateRestaurantPhotos(userDbInfo!.id, restaurant!.placeId, updatedPhotos);
+      setYourPhotos(updatedPhotos);
+      setNewAddedPhotos(images);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <RestaurantDetailsHeader
-        headerLeft={<Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />}
+        headerLeft={
+          <TouchableOpacity onPress={handleBackPressed}>
+            <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />
+          </TouchableOpacity>
+        }
         headerRight={
           <View style={{ flexDirection: "row", gap: 8 }}>
             <TouchableOpacity>
@@ -134,14 +342,14 @@ const restaurantDetails = () => {
           </View>
         }
       />
-      {loading && !restaurant ? (
+      {loading || !restaurant ? (
         <></>
       ) : (
         <>
           {/* Map View */}
           <View style={{ height: "40%" }}>
             <MapView
-              style={StyleSheet.absoluteFill}
+              style={[StyleSheet.absoluteFill, { opacity: 0.55 }]}
               provider={PROVIDER_GOOGLE}
               initialRegion={{
                 latitude: restaurant?.coordinate.latitude + 0.001 || 38.8462,
@@ -170,13 +378,29 @@ const restaurantDetails = () => {
 
             <View style={styles.mapDetailsText}>
               <Text style={styles.restaurantName}>{restaurant?.name}</Text>
+
               <View style={styles.checkmarkContainer}>
-                <Ionicons
-                  name="checkmark-circle"
-                  size={35}
-                  color={Colors.primary}
-                  style={{ opacity: 0.45 }}
-                />
+                {isTried ? (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={35}
+                    color={Colors.primary}
+                    style={{ opacity: 0.45 }}
+                  />
+                ) : (
+                  <View style={{ flexDirection: "row", gap: 5 }}>
+                    <TouchableOpacity>
+                      <Ionicons name="add-circle-outline" size={40} color={Colors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity>
+                      <Ionicons
+                        name={isToTry ? "bookmark" : "bookmark-outline"}
+                        size={40}
+                        color={Colors.primary}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             </View>
           </View>
@@ -217,6 +441,7 @@ const restaurantDetails = () => {
             showsVerticalScrollIndicator={false}
             style={{ marginTop: 20 }}
             sections={UserDummyData}
+            //@ts-ignore
             stickyHeaderIndices={[0]}
             keyExtractor={(item, index) => item.userName + index}
             renderSectionHeader={() => (
@@ -224,58 +449,19 @@ const restaurantDetails = () => {
                 <Text style={styles.sectionHeaderText}>What did your friends think?</Text>
               </View>
             )}
-            ListHeaderComponent={() => (
-              <View style={{ backgroundColor: "white" }}>
-                {/* Your Photos */}
-                <View style={{ paddingLeft: 10 }}>
-                  <Text style={styles.sectionHeaderText}>Your photos</Text>
-                  <View style={{ flexDirection: "row", gap: 10 }}>
-                    <TouchableOpacity style={styles.addPhotoButton}>
-                      <Ionicons name="add" size={25} color={Colors.black} />
-                      <Text style={styles.addPhotoButtonText}>Add</Text>
-                    </TouchableOpacity>
-                    <FlatList
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={{ gap: 10, paddingRight: 10 }}
-                      horizontal
-                      keyExtractor={(item, index) => index.toString()}
-                      data={Array.from({ length: 7 }, (_, i) => i.toString())}
-                      renderItem={({ item }) => (
-                        <TouchableWithoutFeedback onPress={() => setIsModalVisible(true)}>
-                          <Image
-                            source={require("@/assets/images/food-4.jpeg")}
-                            style={styles.photoContainer}
-                          />
-                        </TouchableWithoutFeedback>
-                      )}
-                    />
-                  </View>
-                </View>
-
-                {/* Comments */}
-                <View style={{ paddingHorizontal: 10, paddingVertical: 20 }}>
-                  <Text style={styles.sectionHeaderText}>Comments</Text>
-
-                  <Text
-                    style={styles.commentText}
-                    numberOfLines={8}
-                    onPress={handleCommentPress}
-                    suppressHighlighting
-                  >
-                    {DummyText || "Comments about the restaurant..."}
-                  </Text>
-                </View>
-              </View>
-            )}
+            ListHeaderComponent={HeaderComponent}
             renderItem={({ item }) => <ListingsMemberItem user={item} ranking />}
           />
         </>
       )}
       {/* Picture View Modal */}
-      <PictureViewModal
-        isModalVisible={isModalVisible}
-        toggleModal={() => setIsModalVisible(false)}
-      />
+      {isModalVisible && (
+        <PictureViewModal
+          isModalVisible={isModalVisible}
+          toggleModal={() => setIsModalVisible(false)}
+          photoUrl={selectedPhoto}
+        />
+      )}
     </View>
   );
 };
@@ -394,16 +580,32 @@ const styles = StyleSheet.create({
     width: 74,
     borderRadius: 5,
     marginTop: 10,
+    backgroundColor: Colors.lightGray,
   },
 
   commentText: {
     fontSize: 14,
-    color: DummyText ? Colors.black : Colors.gray,
     borderColor: Colors.gray,
     borderWidth: 1,
     borderRadius: 5,
     marginTop: 10,
     paddingHorizontal: 10,
     paddingVertical: 5,
+  },
+
+  rankingCircle: {
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    borderColor: Colors.gray,
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  rankingText: {
+    fontSize: Font.small,
+    color: Colors.secondary,
+    fontWeight: "bold",
   },
 });

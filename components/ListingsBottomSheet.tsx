@@ -38,7 +38,7 @@ interface ListingsBottomSheetProps {
   enableContentPanningGesture?: boolean;
   contentContainerStyle?: ViewProps["style"];
   loadingData: boolean;
-  onEndReached: () => void;
+  onEndReached?: () => void;
   emptyDataMessage?: string;
 }
 

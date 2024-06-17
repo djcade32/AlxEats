@@ -59,6 +59,7 @@ const ListingsRestaurantItem = ({
         authUser.uid,
         userDbInfo?.firstName!,
         restaurant.name,
+        restaurant.address,
         restaurant.placeId,
         "TO_TRY"
       );

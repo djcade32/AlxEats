@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { SignInMethods } from "@/enums";
 import { User } from "firebase/auth";
 import { RestaurantRankingPayload, User as UserDb } from "@/interfaces";
+import { DocumentData } from "firebase/firestore";
 
 export interface AppState {
   authUser: User | null;
@@ -16,8 +17,15 @@ export interface AppState {
   setPendingEmailVerification: (pending: boolean) => void;
   userTriedRestaurants: RestaurantRankingPayload[];
   setUserTriedRestaurants: (restaurants: RestaurantRankingPayload[]) => void;
+  checkIfUserTriedRestaurant: (placeId: string) => boolean;
   userToTryRestaurants: string[];
   setUserToTryRestaurants: (restaurants: string[]) => void;
+  checkIfUserToTryRestaurant: (placeId: string) => boolean;
+  userFollowing: string[];
+  setUserFollowing: (following: string[]) => void;
+  userFollowers: string[];
+  setUserFollowers: (followers: string[]) => void;
+  clearStore: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -43,9 +51,33 @@ export const useAppStore = create<AppState>()(
       setUserTriedRestaurants: (restaurants: RestaurantRankingPayload[]) => {
         set({ userTriedRestaurants: restaurants });
       },
+      checkIfUserTriedRestaurant: (placeId: string) => {
+        return get().userTriedRestaurants.find((r) => r.id === placeId) ? true : false;
+      },
       userToTryRestaurants: [],
       setUserToTryRestaurants: (restaurants: string[]) => {
         set({ userToTryRestaurants: restaurants });
+      },
+      checkIfUserToTryRestaurant: (placeId: string) => {
+        return get().userToTryRestaurants.includes(placeId);
+      },
+      userFollowing: [],
+      setUserFollowing: (following: string[]) => {
+        set({ userFollowing: following });
+      },
+      userFollowers: [],
+      setUserFollowers: (followers: string[]) => {
+        set({ userFollowers: followers });
+      },
+      clearStore: () => {
+        set({
+          authUser: null,
+          userDbInfo: null,
+          userTriedRestaurants: [],
+          userToTryRestaurants: [],
+          userFollowing: [],
+          userFollowers: [],
+        });
       },
     }),
 

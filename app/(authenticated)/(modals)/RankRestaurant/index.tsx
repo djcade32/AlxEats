@@ -15,7 +15,7 @@ import CustomLoadingButton from "@/components/CustomLoadingButton";
 import { RestaurantCriteriaEnums } from "@/enums";
 import { RestaurantCriteriaTypes } from "@/types";
 import { uploadImages } from "@/common-utils";
-import { restaurantAdded, restaurantRemoved } from "@/firebase";
+import { removePost, restaurantAdded, restaurantRemoved } from "@/firebase";
 
 const initialOptionsState: Record<RestaurantCriteriaTypes, number> = {
   [RestaurantCriteriaEnums.TASTE]: -1,
@@ -26,8 +26,9 @@ const initialOptionsState: Record<RestaurantCriteriaTypes, number> = {
 };
 
 const rankRestaurant = () => {
-  const restaurantObj = JSON.parse(useLocalSearchParams().restaurant as any) as RestaurantItem;
+  const restaurantObj = JSON.parse(useLocalSearchParams().restaurant as any);
   const isToTry = JSON.parse(useLocalSearchParams().isToTry as any) as Boolean;
+  const postId = useLocalSearchParams().postId as string;
 
   const router = useRouter();
   const { userDbInfo } = useAppStore();
@@ -49,6 +50,7 @@ const rankRestaurant = () => {
         [criteria]: Math.abs(index - userDbInfo.criteria.length),
       }));
     });
+
     setLoading(false);
   }, []);
 
@@ -167,11 +169,13 @@ const rankRestaurant = () => {
       };
       if (isToTry) {
         await restaurantRemoved(userDbInfo?.id!, restaurantObj.placeId, "TO_TRY");
+        await removePost(userDbInfo?.id!, restaurantObj.placeId);
       }
       await restaurantAdded(
         userDbInfo?.id!,
         userDbInfo?.firstName!,
         restaurantObj.name,
+        restaurantObj.address,
         restaurantObj.placeId,
         "TRIED",
         restaurantRankingObj
@@ -216,11 +220,9 @@ const rankRestaurant = () => {
           ></Stack.Screen>
           <View style={styles.restaurantInfoText}>
             <Text style={{ fontSize: Font.small, color: Colors.black, marginBottom: 10 }}>
-              Ranking
+              Scoring
             </Text>
-            {/* <Text style={styles.restaurantTitle}>Hank</Text> */}
             <Text style={styles.restaurantTitle}>{restaurantObj.name}</Text>
-            {/* <Text style={styles.restaurantAddress}>address</Text> */}
             <Text style={styles.restaurantAddress}>{restaurantObj.address}</Text>
           </View>
           <ScrollView style={{ flex: 1, marginTop: 15 }} showsVerticalScrollIndicator={false}>

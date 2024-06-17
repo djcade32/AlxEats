@@ -67,7 +67,7 @@ function InitialLayout() {
           if (exists) {
             setUserDbInfo({ ...exists, criteria: JSON.parse(exists.criteria) });
           }
-          // router.replace("/(authenticated)/(modals)/Filter");
+          // router.replace("/(authenticated)/(tabs)/currentUser");
 
           exists ? router.replace("/(authenticated)/home") : router.replace("(onboarding)/");
         });
