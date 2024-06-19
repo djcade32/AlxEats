@@ -491,16 +491,12 @@ export const removeRestaurantFromTriedList = async (
           return restaurantId !== restaurant.id;
         }
       );
-      // console.log(
-      //   "Updated tried restaurants: ",
-      //   triedRestaurants.filter(
-      //     (restaurant: RestaurantRankingPayload) => restaurantId === restaurant.id
-      //   )
-      // );
       await setDoc(userRef, {
         data: updatedTriedRestaurants,
       });
       console.log(`Restaurant ${restaurantId} removed from tried list for user ${userId}`);
+      // remove restaurant from user's feed
+      await removePost(userId, restaurantId);
       return Promise.resolve();
     } else {
       console.log("Document does not exist");
