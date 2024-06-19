@@ -62,10 +62,10 @@ const Post = ({ post }: PostProps) => {
 
     if (post.likes.includes(userDbInfo!.id)) setIsLiked(true);
   }, []);
-  // useEffect(() => {
-  //   if (loading) return;
-  //   checkIfUserTriedRestaurant(post.restaurantId) ? setIsTried(true) : setIsTried(false);
-  // }, [userPosts]);
+  useEffect(() => {
+    if (loading) return;
+    checkIfUserTriedRestaurant(post.restaurantId) ? setIsTried(true) : setIsTried(false);
+  }, [userPosts]);
 
   const handlePostPress = () => {
     router.push({

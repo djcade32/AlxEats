@@ -20,16 +20,16 @@ const ListingsRestaurantItem = ({
   isToTry,
 }: ListingsRestaurantItemProps) => {
   const router = useRouter();
-  const { authUser, userToTryRestaurants, userTriedRestaurants, userDbInfo } = useAppStore();
+  const { authUser, userPosts, userTriedRestaurants, userDbInfo } = useAppStore();
 
   const { width } = useWindowDimensions();
   const [rankingValue, setRankingValue] = useState<number | null>(null);
   const TEXT_AVAILABLE_WIDTH = width - 130;
 
   useEffect(() => {
-    const ranking = userTriedRestaurants.find((r) => r.id === restaurant.placeId)?.ranking;
-    if (ranking) setRankingValue(ranking);
-  }, [userTriedRestaurants]);
+    const ranking = userPosts.find((r) => r.restaurantId === restaurant.placeId)?.ranking;
+    ranking ? setRankingValue(ranking) : setRankingValue(null);
+  }, [userPosts]);
 
   const handleRestaurantPress = (item: RestaurantItem) => {
     router.push({

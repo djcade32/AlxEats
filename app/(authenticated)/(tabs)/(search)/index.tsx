@@ -56,7 +56,7 @@ const search = () => {
       setFilteredAllUsers(allUsersPagination?.data || []);
       setLoading(false);
     }
-  }, [userToTryRestaurants, userTriedRestaurants]);
+  }, []);
 
   // Update search results when search text changes
   useEffect(() => {
