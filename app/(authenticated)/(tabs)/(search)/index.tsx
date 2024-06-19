@@ -56,7 +56,7 @@ const search = () => {
       setFilteredAllUsers(allUsersPagination?.data || []);
       setLoading(false);
     }
-  }, []);
+  }, [userToTryRestaurants, userTriedRestaurants]);
 
   // Update search results when search text changes
   useEffect(() => {
@@ -160,8 +160,8 @@ const search = () => {
             }),
           } as RestaurantItem)
       );
-      setRestaurantData((prev: any) => (pageToken ? [...prev, ...data] : data));
-      setFilteredRestaurantData((prev: any) => (pageToken ? [...prev, ...data] : data));
+      setRestaurantData((prev: any) => (pageToken ? [...prev, ...data] : [...data]));
+      setFilteredRestaurantData((prev: any) => (pageToken ? [...prev, ...data] : [...data]));
     } catch (error) {
       console.log("Error fetching restaurant: ", error);
     } finally {
@@ -173,6 +173,7 @@ const search = () => {
   const renderRowItem = ({ item }: any) => {
     if (item.email && item.email === getAuth().currentUser?.email) return null;
     const isToTry = userToTryRestaurants.includes(item.placeId);
+
     return (
       <>
         {viewMembers ? (
