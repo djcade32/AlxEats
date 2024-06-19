@@ -54,8 +54,7 @@ const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 const restaurantDetails = () => {
   let restaurantObj = useLocalSearchParams<any>().restaurant as any;
   let restaurantId = useLocalSearchParams<any>().id as any;
-  const { userDbInfo, checkIfUserToTryRestaurant, userTriedRestaurants, userToTryRestaurants } =
-    useAppStore();
+  const { userDbInfo, checkIfUserToTryRestaurant, userPosts } = useAppStore();
   const { updateComment, comment } = useRestaurantRankingStore();
   const router = useRouter();
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -94,6 +93,7 @@ const restaurantDetails = () => {
           }),
         };
         setRestaurant(newRestaurant);
+        console.log("checking if restaurant in list");
         const resTried: RestaurantRankingPayload = await checkIfRestaurantInList(
           userDbInfo!.id,
           newRestaurant.placeId,
@@ -104,6 +104,9 @@ const restaurantDetails = () => {
           updateComment(resTried.comment || "");
           setRanking(resTried.ranking || 0);
           setIsTried(true);
+        } else {
+          setRanking(null);
+          setIsTried(false);
         }
         if (!resTried) setIsToTry(checkIfUserToTryRestaurant(newRestaurant.placeId));
         setLoading(false);
@@ -117,17 +120,21 @@ const restaurantDetails = () => {
           restaurant.placeId,
           "TRIED"
         );
+        console.log("checking the second way ");
         if (resTried) {
           setYourPhotos(resTried.photos || []);
           updateComment(resTried.comment || "");
           setRanking(resTried.ranking || 0);
           setIsTried(true);
+        } else {
+          setRanking(null);
+          setIsTried(false);
         }
         if (!resTried) setIsToTry(checkIfUserToTryRestaurant(restaurant.placeId));
         setLoading(false);
       })();
     }
-  }, [userToTryRestaurants, userTriedRestaurants]);
+  }, [userPosts]);
 
   const HeaderComponent = useMemo(
     () => (
