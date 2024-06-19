@@ -21,38 +21,26 @@ import Post from "@/components/Post";
 import Font from "@/constants/Font";
 
 const currentUser = () => {
-  const { userDbInfo, userToTryRestaurants, userTriedRestaurants, userFollowers, userFollowing } =
-    useAppStore();
+  const {
+    userDbInfo,
+    userToTryRestaurants,
+    userTriedRestaurants,
+    userFollowers,
+    userFollowing,
+    userPosts,
+  } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [isCurrentUser, setIsCurrentUser] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [userPosts, setUserPosts] = useState<FeedPost[]>([]);
+  // const [userPosts, setUserPosts] = useState<FeedPost[]>([]);
   const router = useRouter();
 
   useEffect(() => {
     setIsCurrentUser(userDbInfo?.id === getAuth().currentUser?.uid);
     setUser(userDbInfo);
-    (async () => {
-      getPosts(userDbInfo!).then(() => setTimeout(() => setLoading(false), 2000));
-    })();
-  }, []);
+    setLoading(false);
+  }, [userPosts]);
 
-  useEffect(() => {
-    if (user) {
-      getPosts(userDbInfo!);
-    }
-  }, [user, userTriedRestaurants, userToTryRestaurants]);
-
-  const getPosts = async (user: User) => {
-    try {
-      if (!user) return console.log("User not found");
-      getUserPosts(user.id).then((posts) => {
-        setUserPosts([...posts]);
-      });
-    } catch (error) {
-      console.log("Error getting user posts: ", error);
-    }
-  };
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
       <Stack.Screen

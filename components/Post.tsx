@@ -31,13 +31,8 @@ interface PostProps {
 }
 
 const Post = ({ post }: PostProps) => {
-  const {
-    userDbInfo,
-    userTriedRestaurants,
-    userToTryRestaurants,
-    checkIfUserTriedRestaurant,
-    checkIfUserToTryRestaurant,
-  } = useAppStore();
+  const { userDbInfo, userPosts, checkIfUserTriedRestaurant, checkIfUserToTryRestaurant } =
+    useAppStore();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
@@ -70,7 +65,7 @@ const Post = ({ post }: PostProps) => {
   useEffect(() => {
     if (loading) return;
     checkIfUserTriedRestaurant(post.restaurantId) ? setIsTried(true) : setIsTried(false);
-  }, [userTriedRestaurants, userToTryRestaurants]);
+  }, [userPosts]);
 
   const handlePostPress = () => {
     router.push({

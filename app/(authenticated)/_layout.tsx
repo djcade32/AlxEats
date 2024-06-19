@@ -2,13 +2,14 @@ import React, { useEffect, useState } from "react";
 import { Stack, useRouter } from "expo-router";
 import { getAuth } from "firebase/auth";
 import { checkIfEmailExists, getDb, getUserRestaurantsToTryList } from "@/firebase";
-import { collection, doc, getDocs, onSnapshot, query, where } from "firebase/firestore";
+import { collection, doc, getDocs, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import CustomHeader from "@/components/CustomHeader";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import Font from "@/constants/Font";
 import { TouchableOpacity } from "react-native";
 import { useAppStore } from "@/store/app-storage";
+import { FeedPost } from "@/interfaces";
 
 const _layout = () => {
   const {
@@ -17,6 +18,7 @@ const _layout = () => {
     setUserTriedRestaurants,
     setUserFollowers,
     setUserFollowing,
+    setUserPosts,
   } = useAppStore();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -43,7 +45,6 @@ const _layout = () => {
     const q = query(collection(db!, `userRestaurants/${userDbInfo?.id}/tried`));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
-        // Determine if the change is a new addition or a removal
         setUserTriedRestaurants(change.doc.data().data);
         console.log("User tried restaurants retrieved");
       });
@@ -78,6 +79,23 @@ const _layout = () => {
     const unsubscribe = onSnapshot(userRef, (snapshot) => {
       if (!snapshot.exists()) return;
       setUserFollowers(snapshot.data().followedBy);
+    });
+
+    return () => unsubscribe();
+  }, [userDbInfo]);
+
+  //Get user posts
+  useEffect(() => {
+    if (!userDbInfo) return;
+    let db = getDb();
+    const q = query(
+      collection(db!, `feed`),
+      where("userId", "==", userDbInfo.id),
+      orderBy("createdAt", "desc")
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setUserPosts([...snapshot.docs.map((doc) => doc.data() as FeedPost)]);
+      console.log("User's posts retrieved");
     });
 
     return () => unsubscribe();

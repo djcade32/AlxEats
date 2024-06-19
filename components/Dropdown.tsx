@@ -1,11 +1,10 @@
-import { Alert, StyleSheet, Text, Touchable, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React from "react";
-import { Ionicons, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
-import { removeRestaurantFromTriedList, restaurantRemoved } from "@/firebase";
+import { removeRestaurantFromTriedList } from "@/firebase";
 import { Menu, renderers, MenuTrigger, MenuOptions, MenuOption } from "react-native-popup-menu";
 import { RestaurantItem } from "@/interfaces";
-import { UserRestaurantsList } from "@/types";
 
 interface DropdownProps {
   ranking: number;

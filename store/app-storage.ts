@@ -3,7 +3,7 @@ import { zustandStorage } from "@/store/async-storage";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { SignInMethods } from "@/enums";
 import { User } from "firebase/auth";
-import { RestaurantRankingPayload, User as UserDb } from "@/interfaces";
+import { FeedPost, RestaurantRankingPayload, User as UserDb } from "@/interfaces";
 import { DocumentData } from "firebase/firestore";
 
 export interface AppState {
@@ -25,6 +25,8 @@ export interface AppState {
   setUserFollowing: (following: string[]) => void;
   userFollowers: string[];
   setUserFollowers: (followers: string[]) => void;
+  userPosts: FeedPost[];
+  setUserPosts: (posts: FeedPost[]) => void;
   clearStore: () => void;
 }
 
@@ -68,6 +70,10 @@ export const useAppStore = create<AppState>()(
       userFollowers: [],
       setUserFollowers: (followers: string[]) => {
         set({ userFollowers: followers });
+      },
+      userPosts: [],
+      setUserPosts: (posts: FeedPost[]) => {
+        set({ userPosts: posts });
       },
       clearStore: () => {
         set({
