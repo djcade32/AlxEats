@@ -14,6 +14,7 @@ import { checkIfEmailExists, getUserRestaurantsToTryList, initializeFirebase } f
 import { LinearGradient } from "expo-linear-gradient";
 import { getAuth } from "firebase/auth";
 import { useAppStore } from "@/store/app-storage";
+import { MenuProvider } from "react-native-popup-menu";
 
 initializeFirebase();
 
@@ -145,7 +146,9 @@ const RootLayoutNav = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="light" />
-      <InitialLayout />
+      <MenuProvider>
+        <InitialLayout />
+      </MenuProvider>
     </GestureHandlerRootView>
   );
 };

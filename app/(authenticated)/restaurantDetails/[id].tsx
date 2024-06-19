@@ -24,7 +24,7 @@ import ListingsMemberItem from "@/components/ListingsMemberItem";
 import { RestaurantItem, RestaurantRankingPayload } from "@/interfaces";
 import { restaurantPriceLevels } from "@/mappings";
 import Cuisines from "@/data/Cuisines";
-import { capitalizeFirstLetter, distanceBetweenCoordinates } from "@/common-utils";
+import { capitalizeFirstLetter, distanceBetweenCoordinates, uploadImages } from "@/common-utils";
 import openMap from "react-native-open-maps";
 import * as ExpoLinking from "expo-linking";
 import * as Location from "expo-location";
@@ -37,6 +37,7 @@ import {
 import { useAppStore } from "@/store/app-storage";
 import { useRestaurantRankingStore } from "@/store/restaurantRanking-storage";
 import * as ImagePicker from "expo-image-picker";
+import Dropdown from "@/components/Dropdown";
 
 const UserDummyData = [
   {
@@ -254,8 +255,8 @@ const restaurantDetails = () => {
   //TODO: Fix call button. May have to rebuild the app to test
   const handleCallPress = () => {
     if (!restaurant) return;
-    // const url = `tel:${restaurant?.phoneNumber}`;
-    const url = "tel: 5719706438";
+    const url = `tel:${restaurant?.phoneNumber}`;
+    // const url = "tel: 5719706438";
     ExpoLinking.canOpenURL(url)
       .then((supported) => {
         if (supported) {
@@ -334,7 +335,11 @@ const restaurantDetails = () => {
       for (const asset of result.assets) {
         images.push(asset.uri);
       }
-      const updatedPhotos = [...images, ...yourPhotos];
+      const newPhotos = await uploadImages(
+        images,
+        `restaurant-pics/${restaurant!.placeId}/${userDbInfo?.id}`
+      );
+      const updatedPhotos = [...newPhotos, ...yourPhotos];
       await updateRestaurantPhotos(userDbInfo!.id, restaurant!.placeId, updatedPhotos);
       setYourPhotos(updatedPhotos);
     }
@@ -385,7 +390,14 @@ const restaurantDetails = () => {
               <Ionicons name="share-outline" size={35} color={Colors.black} />
             </TouchableOpacity>
             <TouchableOpacity>
-              <MaterialCommunityIcons name="dots-horizontal" size={35} color={Colors.black} />
+              <Dropdown
+                userId={userDbInfo!.id}
+                restaurantItem={restaurant!}
+                ranking={ranking!}
+                handleGetDirectionsPressed={handleGetDirectionsPressed}
+                handleWebsitePressed={handleWebsitePressed}
+                handleCallPressed={handleCallPress}
+              />
             </TouchableOpacity>
           </View>
         }

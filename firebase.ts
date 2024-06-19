@@ -431,6 +431,8 @@ export const restaurantRemoved = async (
 ): Promise<void> => {
   const db = getDb();
   try {
+    console.log("Removing restaurant from list: ", list);
+    console.log("Restaurant obj", { ...restaurantItem, ranking });
     if (!db) {
       return Promise.reject("Error: Database not found");
     }
@@ -462,6 +464,51 @@ export const restaurantRemoved = async (
     return Promise.resolve();
   } catch (error) {
     console.log("Error removing restaurant from list: ", error);
+  }
+};
+
+// Remove restaurant from user's tried list
+export const removeRestaurantFromTriedList = async (
+  userId: string,
+  restaurantId: string
+): Promise<void> => {
+  try {
+    console.log("Removing restaurant from tried list");
+    const db = getDb();
+    if (!db) {
+      return Promise.reject("Error: Database not found");
+    }
+    if (!userId || !restaurantId) return Promise.reject("Error: Missing user or restaurant id");
+    const dbUrl = `userRestaurants/${userId}/tried/data`;
+    const userRef = doc(db, dbUrl);
+    const docSnap = await getDoc(userRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const triedRestaurants = data.data;
+      const updatedTriedRestaurants = triedRestaurants.filter(
+        (restaurant: RestaurantRankingPayload) => {
+          console.log("restaurantId: ", restaurantId, "restaurant.id: ", restaurant.id);
+          return restaurantId !== restaurant.id;
+        }
+      );
+      // console.log(
+      //   "Updated tried restaurants: ",
+      //   triedRestaurants.filter(
+      //     (restaurant: RestaurantRankingPayload) => restaurantId === restaurant.id
+      //   )
+      // );
+      await setDoc(userRef, {
+        data: updatedTriedRestaurants,
+      });
+      console.log(`Restaurant ${restaurantId} removed from tried list for user ${userId}`);
+      return Promise.resolve();
+    } else {
+      console.log("Document does not exist");
+      return Promise.reject("Error: Document does not exist");
+    }
+  } catch (error) {
+    console.log("Error removing restaurant from tried list: ", error);
+    return Promise.reject(error);
   }
 };
 
