@@ -8,8 +8,9 @@ import {
   SectionList,
   Linking,
   Alert,
+  ScrollView,
 } from "react-native";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import RestaurantDetailsHeader from "@/components/RestaurantDetailsHeader";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -53,9 +54,9 @@ const restaurantDetails = () => {
   const [restaurant, setRestaurant] = useState<RestaurantItem | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [yourPhotos, setYourPhotos] = useState<string[]>([]);
-  const [ranking, setRanking] = useState<number | null>(null);
-  const [isTried, setIsTried] = useState(false);
-  const [isToTry, setIsToTry] = useState(false);
+  const [ranking, setRanking] = useState<number | null>();
+  const [isTried, setIsTried] = useState<boolean | undefined>();
+  const [isToTry, setIsToTry] = useState<boolean | undefined>();
   const [friendsTried, setFriendsTried] = useState<{ title: string; data: any[] }[]>([
     {
       title: "Peer Reviews",
@@ -101,6 +102,7 @@ const restaurantDetails = () => {
           updateComment(resTried.comment || "");
           setRanking(resTried.ranking || 0);
           setIsTried(true);
+          setIsToTry(false);
         } else {
           setRanking(null);
           setIsTried(false);
@@ -121,6 +123,7 @@ const restaurantDetails = () => {
           updateComment(resTried.comment || "");
           setRanking(resTried.ranking || 0);
           setIsTried(true);
+          setIsToTry(false);
         } else {
           setRanking(null);
           setIsTried(false);
@@ -146,21 +149,35 @@ const restaurantDetails = () => {
                       data: [...prev[0].data, { user, ranking: res.ranking }],
                     },
                   ]);
-                  setFriendsTotalScore(
-                    (prev) => (prev + res.ranking) / friendsTried[0].data.length
-                  );
                 }
               });
             }
           }
         );
       });
-    })().finally(() => setLoading(false));
+    })();
   }, [restaurant]);
+
+  useEffect(() => {
+    if (isToTry !== undefined && isTried !== undefined) setLoading(false);
+  }, [isToTry, isTried]);
+
+  useEffect(() => {
+    if (!loading && friendsTried[0].data.length > 0) {
+      let totalScore = 0;
+      friendsTried[0].data.forEach((friend) => {
+        totalScore += friend.ranking;
+      });
+      setFriendsTotalScore(totalScore);
+    }
+  }, [friendsTried]);
 
   const HeaderComponent = useMemo(
     () => (
       <View style={{ backgroundColor: "white" }}>
+        {
+          //#region Scores
+        }
         {/* Scores */}
         <View style={{ paddingHorizontal: 10 }}>
           <Text style={styles.sectionHeaderText}>Scores</Text>
@@ -202,6 +219,9 @@ const restaurantDetails = () => {
             </View>
           </View>
         </View>
+        {
+          //#region Your Photos
+        }
         {/* Your Photos */}
         <View style={{ paddingLeft: 10 }}>
           <Text style={styles.sectionHeaderText}>Your photos</Text>
@@ -227,7 +247,9 @@ const restaurantDetails = () => {
             />
           </View>
         </View>
-
+        {
+          //#region Comments
+        }
         {/* Comments */}
         <View style={{ paddingHorizontal: 10, paddingVertical: 20 }}>
           <Text style={styles.sectionHeaderText}>Comments</Text>
@@ -444,6 +466,9 @@ const restaurantDetails = () => {
         <></>
       ) : (
         <>
+          {
+            //#region Map View
+          }
           {/* Map View */}
           <View style={{ height: "40%" }}>
             <MapView
@@ -502,7 +527,9 @@ const restaurantDetails = () => {
               </View>
             </View>
           </View>
-
+          {
+            //#region Restaurant Details
+          }
           {/* Restaurant Details */}
           <View style={styles.restaurantDetails}>
             <View style={{ gap: 5, flex: 1 }}>
@@ -512,7 +539,9 @@ const restaurantDetails = () => {
               <Text style={styles.addressContainer}>{restaurant?.address}</Text>
             </View>
           </View>
-
+          {
+            //#region Action Buttons
+          }
           {/* Action Buttons */}
           <View style={styles.actionButtonsContainer}>
             <TouchableOpacity style={styles.actionButton} onPress={handleGetDirectionsPressed}>
@@ -534,25 +563,50 @@ const restaurantDetails = () => {
               <Text style={styles.actionButtonText}>Call</Text>
             </TouchableOpacity>
           </View>
-
-          {/* What did your friends think? */}
-          <SectionList
-            showsVerticalScrollIndicator={false}
-            style={{ marginTop: 20 }}
-            sections={friendsTried}
-            //@ts-ignore
-            stickyHeaderIndices={[0]}
-            keyExtractor={(item) => item.user.id}
-            renderSectionHeader={() => (
+          {
+            //#region What did your friends think?
+          }
+          {friendsTried[0].data.length > 0 ? (
+            <SectionList
+              showsVerticalScrollIndicator={false}
+              style={{ marginTop: 20 }}
+              sections={friendsTried}
+              //@ts-ignore
+              stickyHeaderIndices={[0]}
+              keyExtractor={(item) => item.user.id}
+              renderSectionHeader={(item) => (
+                <View style={styles.sectionListHeaderContainer}>
+                  <Text style={styles.sectionHeaderText}>What did your friends think?</Text>
+                </View>
+              )}
+              ListHeaderComponent={HeaderComponent}
+              renderItem={({ item }) => (
+                <ListingsMemberItem user={item.user} ranking={item.ranking} />
+              )}
+              contentContainerStyle={{ paddingBottom: 20 }}
+            />
+          ) : (
+            <ScrollView
+              style={{ marginTop: 20 }}
+              contentContainerStyle={{ paddingBottom: 75 }}
+              showsVerticalScrollIndicator={false}
+            >
+              {HeaderComponent}
               <View style={styles.sectionListHeaderContainer}>
                 <Text style={styles.sectionHeaderText}>What did your friends think?</Text>
               </View>
-            )}
-            ListHeaderComponent={HeaderComponent}
-            renderItem={({ item }) => (
-              <ListingsMemberItem user={item.user} ranking={item.ranking} />
-            )}
-          />
+              <Text
+                style={{
+                  textAlign: "center",
+                  marginTop: 20,
+                  color: Colors.gray,
+                  fontSize: Font.small,
+                }}
+              >
+                No scores from friends yet
+              </Text>
+            </ScrollView>
+          )}
         </>
       )}
       {/* Picture View Modal */}
