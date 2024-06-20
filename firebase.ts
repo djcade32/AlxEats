@@ -741,6 +741,52 @@ export const removeUserFromFollowedByList = async (
   }
 };
 
+// Get given user's followers
+export const getUserFollowers = async (userId: string): Promise<string[]> => {
+  try {
+    const db = getDb();
+    if (!db) {
+      return Promise.reject("Error: Database not found");
+    }
+    if (!userId) return Promise.reject("Error: Missing user id");
+    const dbUrl = `followings/${userId}`;
+    const userRef = doc(db, dbUrl);
+    const docSnap = await getDoc(userRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return data.followedBy;
+    } else {
+      console.log("Document does not exist");
+      return []; // Document does not exist
+    }
+  } catch (error: any) {
+    return Promise.reject(`Error: ${error.message}`);
+  }
+};
+
+// Get given user's followings
+export const getUserFollowings = async (userId: string): Promise<string[]> => {
+  try {
+    const db = getDb();
+    if (!db) {
+      return Promise.reject("Error: Database not found");
+    }
+    if (!userId) return Promise.reject("Error: Missing user id");
+    const dbUrl = `followings/${userId}`;
+    const userRef = doc(db, dbUrl);
+    const docSnap = await getDoc(userRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return data.following;
+    } else {
+      console.log("Document does not exist");
+      return []; // Document does not exist
+    }
+  } catch (error: any) {
+    return Promise.reject(`Error: ${error.message}`);
+  }
+};
+
 //Add like to post
 export const likePost = async (userId: string, postId: string): Promise<void> => {
   try {

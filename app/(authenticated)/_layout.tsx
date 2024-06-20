@@ -21,7 +21,7 @@ const _layout = () => {
     setUserPosts,
   } = useAppStore();
   const [isLoading, setIsLoading] = useState(false);
-
+  // Get user to try restaurants
   useEffect(() => {
     setUserToTryRestaurants([]);
 
@@ -37,6 +37,7 @@ const _layout = () => {
     return () => unsubscribe();
   }, [userDbInfo]);
 
+  // Get user tried restaurants
   useEffect(() => {
     if (!userDbInfo) return;
     setUserTriedRestaurants([]);
@@ -53,6 +54,7 @@ const _layout = () => {
     return () => unsubscribe();
   }, [userDbInfo]);
 
+  // Get user followings
   useEffect(() => {
     if (!userDbInfo) return;
 
@@ -68,6 +70,7 @@ const _layout = () => {
     return () => unsubscribe();
   }, [userDbInfo]);
 
+  // Get user followers
   useEffect(() => {
     if (!userDbInfo) return;
 

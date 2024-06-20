@@ -14,7 +14,7 @@ import Colors from "@/constants/Colors";
 import Font from "@/constants/Font";
 import CustomHeader from "@/components/CustomHeader";
 import { FeedPost, User } from "@/interfaces";
-import { getUserById, getUserPosts } from "@/firebase";
+import { getUserById, getUserFollowers, getUserFollowings, getUserPosts } from "@/firebase";
 import LoadingText from "@/components/LoadingText";
 import { getAuth } from "firebase/auth";
 import Post from "@/components/Post";
@@ -25,12 +25,16 @@ const profile = () => {
   const [isCurrentUser, setIsCurrentUser] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [userPosts, setUserPosts] = useState<FeedPost[]>([]);
+  const [userFollowings, setUserFollowings] = useState<string[]>([]);
+  const [userFollowers, setUserFollowers] = useState<string[]>([]);
 
   useEffect(() => {
     setIsCurrentUser(userId === getAuth().currentUser?.uid);
     (async () => {
       const user = await getUserById(userId);
       setUser(user);
+      setUserFollowings(await getUserFollowings(userId));
+      setUserFollowers(await getUserFollowers(userId));
       getPosts(user).then(() => setTimeout(() => setLoading(false), 2000));
     })();
   }, []);
@@ -132,7 +136,7 @@ const profile = () => {
           <View style={{ alignItems: "center", flex: 1 }}>
             {/* <Text style={{ fontSize: 20, fontFamily: "nm-b" }}>408</Text> */}
             <LoadingText
-              title={"408"}
+              title={userFollowers.length.toString()}
               loading={loading}
               textStyle={{ fontSize: 20, fontFamily: "nm-b" }}
               containerStyle={{ height: 23, width: 25, borderRadius: 10 }}
@@ -142,7 +146,7 @@ const profile = () => {
           <View style={{ alignItems: "center", flex: 1 }}>
             {/* <Text style={{ fontSize: 20, fontFamily: "nm-b" }}>213</Text> */}
             <LoadingText
-              title={"213"}
+              title={userFollowings.length.toString()}
               loading={loading}
               textStyle={{ fontSize: 20, fontFamily: "nm-b" }}
               containerStyle={{ height: 23, width: 25, borderRadius: 10 }}
