@@ -69,7 +69,7 @@ const ListingsMemberItem = ({ user, ranking = false }: ListingsMemberItemProps) 
           </TouchableOpacity>
           {ranking ? (
             <View style={styles.rankingCircle}>
-              <Text style={styles.rankingText}>7.0</Text>
+              <Text style={styles.rankingText}>{ranking}</Text>
             </View>
           ) : (
             <TouchableOpacity

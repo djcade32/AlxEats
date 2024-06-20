@@ -9,7 +9,7 @@ import {
   Linking,
   Alert,
 } from "react-native";
-import React, { memo, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import RestaurantDetailsHeader from "@/components/RestaurantDetailsHeader";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -21,7 +21,7 @@ import { TouchableWithoutFeedback } from "react-native-gesture-handler";
 import PictureViewModal from "@/components/PictureViewModal";
 import { postData as USER_DATA } from "@/assets/data/dummyData";
 import ListingsMemberItem from "@/components/ListingsMemberItem";
-import { RestaurantItem, RestaurantRankingPayload } from "@/interfaces";
+import { RestaurantItem, RestaurantRankingPayload, User } from "@/interfaces";
 import { restaurantPriceLevels } from "@/mappings";
 import Cuisines from "@/data/Cuisines";
 import { capitalizeFirstLetter, distanceBetweenCoordinates, uploadImages } from "@/common-utils";
@@ -30,6 +30,7 @@ import * as ExpoLinking from "expo-linking";
 import * as Location from "expo-location";
 import {
   checkIfRestaurantInList,
+  getUserById,
   restaurantAdded,
   restaurantRemoved,
   updateRestaurantPhotos,
@@ -39,22 +40,12 @@ import { useRestaurantRankingStore } from "@/store/restaurantRanking-storage";
 import * as ImagePicker from "expo-image-picker";
 import Dropdown from "@/components/Dropdown";
 
-const UserDummyData = [
-  {
-    title: "Peer Reviews",
-    data: USER_DATA,
-  },
-];
-
-const DummyText =
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
-
 const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
 const restaurantDetails = () => {
   let restaurantObj = useLocalSearchParams<any>().restaurant as any;
   let restaurantId = useLocalSearchParams<any>().id as any;
-  const { userDbInfo, checkIfUserToTryRestaurant, userPosts } = useAppStore();
+  const { userDbInfo, checkIfUserToTryRestaurant, userPosts, userFollowing } = useAppStore();
   const { updateComment, comment } = useRestaurantRankingStore();
   const router = useRouter();
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -65,6 +56,13 @@ const restaurantDetails = () => {
   const [ranking, setRanking] = useState<number | null>(null);
   const [isTried, setIsTried] = useState(false);
   const [isToTry, setIsToTry] = useState(false);
+  const [friendsTried, setFriendsTried] = useState<{ title: string; data: any[] }[]>([
+    {
+      title: "Peer Reviews",
+      data: [],
+    },
+  ]);
+  const [friendsTotalScore, setFriendsTotalScore] = useState<number>(0);
 
   useEffect(() => {
     if (!restaurantObj) {
@@ -93,7 +91,6 @@ const restaurantDetails = () => {
           }),
         };
         setRestaurant(newRestaurant);
-        console.log("checking if restaurant in list");
         const resTried: RestaurantRankingPayload = await checkIfRestaurantInList(
           userDbInfo!.id,
           newRestaurant.placeId,
@@ -109,7 +106,6 @@ const restaurantDetails = () => {
           setIsTried(false);
         }
         if (!resTried) setIsToTry(checkIfUserToTryRestaurant(newRestaurant.placeId));
-        setLoading(false);
       })();
     } else {
       (async () => {
@@ -120,7 +116,6 @@ const restaurantDetails = () => {
           restaurant.placeId,
           "TRIED"
         );
-        console.log("checking the second way ");
         if (resTried) {
           setYourPhotos(resTried.photos || []);
           updateComment(resTried.comment || "");
@@ -131,10 +126,37 @@ const restaurantDetails = () => {
           setIsTried(false);
         }
         if (!resTried) setIsToTry(checkIfUserToTryRestaurant(restaurant.placeId));
-        setLoading(false);
       })();
     }
   }, [userPosts]);
+
+  useEffect(() => {
+    if (!restaurant) return;
+    console.log("userFollowing: ", userFollowing);
+    (async () => {
+      userFollowing.forEach((userId) => {
+        checkIfRestaurantInList(userId, restaurant.placeId, "TRIED").then(
+          (res: RestaurantRankingPayload) => {
+            if (res) {
+              getUserById(userId).then((user) => {
+                if (user) {
+                  setFriendsTried((prev) => [
+                    {
+                      title: "Peer Reviews",
+                      data: [...prev[0].data, { user, ranking: res.ranking }],
+                    },
+                  ]);
+                  setFriendsTotalScore(
+                    (prev) => (prev + res.ranking) / friendsTried[0].data.length
+                  );
+                }
+              });
+            }
+          }
+        );
+      });
+    })().finally(() => setLoading(false));
+  }, [restaurant]);
 
   const HeaderComponent = useMemo(
     () => (
@@ -162,7 +184,16 @@ const restaurantDetails = () => {
               style={{ flexDirection: "row", gap: 5, alignItems: "center", paddingVertical: 10 }}
             >
               <View style={styles.rankingCircle}>
-                <Text style={[styles.rankingText, { color: Colors.black }]}>-</Text>
+                <Text
+                  style={[
+                    styles.rankingText,
+                    { color: friendsTried[0].data.length > 0 ? Colors.secondary : Colors.black },
+                  ]}
+                >
+                  {friendsTried[0].data.length > 0
+                    ? friendsTotalScore / friendsTried[0].data.length
+                    : "-"}
+                </Text>
               </View>
               <View>
                 <Text style={{ fontSize: Font.small, color: Colors.black }}>Friend's</Text>
@@ -212,7 +243,7 @@ const restaurantDetails = () => {
         </View>
       </View>
     ),
-    [yourPhotos, comment, ranking]
+    [yourPhotos, comment, ranking, friendsTotalScore]
   );
 
   const fetchRestaurant = async (placeId: string) => {
@@ -504,20 +535,23 @@ const restaurantDetails = () => {
             </TouchableOpacity>
           </View>
 
+          {/* What did your friends think? */}
           <SectionList
             showsVerticalScrollIndicator={false}
             style={{ marginTop: 20 }}
-            sections={UserDummyData}
+            sections={friendsTried}
             //@ts-ignore
             stickyHeaderIndices={[0]}
-            keyExtractor={(item, index) => item.userName + index}
+            keyExtractor={(item) => item.user.id}
             renderSectionHeader={() => (
               <View style={styles.sectionListHeaderContainer}>
                 <Text style={styles.sectionHeaderText}>What did your friends think?</Text>
               </View>
             )}
             ListHeaderComponent={HeaderComponent}
-            renderItem={({ item }) => <ListingsMemberItem user={item} ranking />}
+            renderItem={({ item }) => (
+              <ListingsMemberItem user={item.user} ranking={item.ranking} />
+            )}
           />
         </>
       )}
