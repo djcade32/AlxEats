@@ -20,7 +20,7 @@ import { mapStyle } from "@/customMapStyle";
 import Font from "@/constants/Font";
 import { TouchableWithoutFeedback } from "react-native-gesture-handler";
 import PictureViewModal from "@/components/PictureViewModal";
-import { postData as USER_DATA } from "@/assets/data/dummyData";
+import { useQuery } from "react-query";
 import ListingsMemberItem from "@/components/ListingsMemberItem";
 import { RestaurantItem, RestaurantRankingPayload, User } from "@/interfaces";
 import { restaurantPriceLevels } from "@/mappings";
@@ -40,6 +40,7 @@ import { useAppStore } from "@/store/app-storage";
 import { useRestaurantRankingStore } from "@/store/restaurantRanking-storage";
 import * as ImagePicker from "expo-image-picker";
 import Dropdown from "@/components/Dropdown";
+import useRestaurantEffect from "@/hooks/useRestaurantEffect";
 
 const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
@@ -65,112 +66,60 @@ const restaurantDetails = () => {
   ]);
   const [friendsTotalScore, setFriendsTotalScore] = useState<number>(0);
 
-  useEffect(() => {
-    if (!restaurantObj) {
-      (async () => {
-        let location = await Location.getCurrentPositionAsync({});
-
-        const data = await fetchRestaurant(JSON.parse(restaurantId));
-        const newRestaurant = {
-          placeId: data.id,
-          coordinate: {
-            latitude: data.location.latitude,
-            longitude: data.location.longitude,
-          },
-          name: data.displayName.text,
-          openNow: data.regularOpeningHours?.openNow,
-          price: data.priceLevel,
-          types: data.types,
-          primaryType: data.primaryType,
-          address: data.formattedAddress,
-          phoneNumber: data.nationalPhoneNumber,
-          website: data.websiteUri,
-          addressComponents: JSON.stringify(data.addressComponents),
-          distance: distanceBetweenCoordinates(location.coords, {
-            latitude: data.location.latitude,
-            longitude: data.location.longitude,
-          }),
-        };
-        setRestaurant(newRestaurant);
-        const resTried: RestaurantRankingPayload = await checkIfRestaurantInList(
-          userDbInfo!.id,
-          newRestaurant.placeId,
-          "TRIED"
-        );
-        if (resTried) {
-          setYourPhotos(resTried.photos || []);
-          updateComment(resTried.comment || "");
-          setRanking(resTried.ranking || 0);
-          setIsTried(true);
-          setIsToTry(false);
-        } else {
-          setRanking(null);
-          setIsTried(false);
-        }
-        if (!resTried) setIsToTry(checkIfUserToTryRestaurant(newRestaurant.placeId));
-      })();
-    } else {
-      (async () => {
-        const restaurant = JSON.parse(restaurantObj);
-        setRestaurant(restaurant);
-        const resTried: RestaurantRankingPayload = await checkIfRestaurantInList(
-          userDbInfo!.id,
-          restaurant.placeId,
-          "TRIED"
-        );
-        if (resTried) {
-          setYourPhotos(resTried.photos || []);
-          updateComment(resTried.comment || "");
-          setRanking(resTried.ranking || 0);
-          setIsTried(true);
-          setIsToTry(false);
-        } else {
-          setRanking(null);
-          setIsTried(false);
-        }
-        if (!resTried) setIsToTry(checkIfUserToTryRestaurant(restaurant.placeId));
-      })();
-    }
-  }, [userPosts]);
+  useRestaurantEffect({
+    userDbInfo,
+    restaurantId,
+    restaurantObj,
+    setRestaurant,
+    setYourPhotos,
+    updateComment,
+    setRanking,
+    setIsTried,
+    setIsToTry,
+    checkIfUserToTryRestaurant,
+    userPosts: userPosts,
+  });
 
   useEffect(() => {
     if (!restaurant) return;
-    console.log("userFollowing: ", userFollowing);
-    (async () => {
-      userFollowing.forEach((userId) => {
-        checkIfRestaurantInList(userId, restaurant.placeId, "TRIED").then(
-          (res: RestaurantRankingPayload) => {
-            if (res) {
-              getUserById(userId).then((user) => {
-                if (user) {
-                  setFriendsTried((prev) => [
-                    {
-                      title: "Peer Reviews",
-                      data: [...prev[0].data, { user, ranking: res.ranking }],
-                    },
-                  ]);
-                }
-              });
-            }
-          }
-        );
-      });
-    })();
-  }, [restaurant]);
 
+    const checkFriendsTried = async () => {
+      const friendsTriedPromises = userFollowing.map(async (userId) => {
+        const res: RestaurantRankingPayload = await checkIfRestaurantInList(
+          userId,
+          restaurant.placeId,
+          "TRIED"
+        );
+        if (res) {
+          const user = await getUserById(userId);
+          if (user) {
+            return { user, ranking: res.ranking };
+          }
+        }
+        return null;
+      });
+
+      const friendsTriedResults = await Promise.all(friendsTriedPromises);
+      const filteredFriendsTried = friendsTriedResults.filter((result) => result !== null);
+
+      setFriendsTried([{ title: "Peer Reviews", data: filteredFriendsTried }]);
+      let totalScore = 0;
+      filteredFriendsTried.forEach((friend) => {
+        totalScore += friend!.ranking;
+      });
+      setFriendsTotalScore(totalScore);
+      // Uncomment this line to show screen only after all data is loaded
+      // setLoading(false);
+    };
+
+    checkFriendsTried();
+  }, [restaurant, userFollowing, setFriendsTried]);
+
+  // This useEffect allows the screen to render faster by showing the screen
+  // before all friend's tried data is loaded
   useEffect(() => {
     if (isToTry !== undefined && isTried !== undefined) setLoading(false);
   }, [isToTry, isTried]);
-
-  useEffect(() => {
-    if (!loading && friendsTried[0].data.length > 0) {
-      let totalScore = 0;
-      friendsTried[0].data.forEach((friend) => {
-        totalScore += friend.ranking;
-      });
-      setFriendsTotalScore(totalScore);
-    }
-  }, [friendsTried]);
 
   const HeaderComponent = useMemo(
     () => (
@@ -267,29 +216,6 @@ const restaurantDetails = () => {
     ),
     [yourPhotos, comment, ranking, friendsTotalScore]
   );
-
-  const fetchRestaurant = async (placeId: string) => {
-    const url = `https://places.googleapis.com/v1/places/${placeId}`;
-    const apiKey = GOOGLE_PLACES_API_KEY;
-
-    const headers = {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask":
-        "displayName.text,types,nationalPhoneNumber,formattedAddress,addressComponents,location,websiteUri,regularOpeningHours.openNow,priceLevel,primaryType,id",
-    };
-
-    try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: headers,
-      });
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.log("Error fetching restaurant: ", error);
-    }
-  };
 
   const handleCommentPress = () => {
     router.push({

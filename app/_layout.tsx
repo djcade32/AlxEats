@@ -15,6 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { getAuth } from "firebase/auth";
 import { useAppStore } from "@/store/app-storage";
 import { MenuProvider } from "react-native-popup-menu";
+import { QueryClient, QueryClientProvider } from "react-query";
 
 initializeFirebase();
 
@@ -30,6 +31,7 @@ export const unstable_settings = {
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+const queryClient = new QueryClient();
 
 function InitialLayout() {
   const [loaded, error] = useFonts({
@@ -147,7 +149,9 @@ const RootLayoutNav = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="light" />
       <MenuProvider>
-        <InitialLayout />
+        <QueryClientProvider client={queryClient}>
+          <InitialLayout />
+        </QueryClientProvider>
       </MenuProvider>
     </GestureHandlerRootView>
   );
