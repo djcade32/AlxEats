@@ -18,7 +18,7 @@ const ListingsMemberItem = ({ user, ranking = false }: ListingsMemberItemProps) 
   const [isFollowing, setIsFollowing] = useState(false);
 
   const handlPress = () => {
-    router.push(`/(authenticated)/(tabs)/(search)/profile/${JSON.stringify(user.id)}`);
+    router.push(`/profile/${JSON.stringify(user.id)}`);
   };
 
   useEffect(() => {

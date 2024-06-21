@@ -17,6 +17,7 @@ const RestaurantDetailsHeader = ({ headerLeft, headerRight }: RestaurantDetailsH
   return (
     <Stack.Screen
       options={{
+        headerTransparent: true,
         header: () => (
           <View style={[styles.container, { paddingTop: top }]}>
             <View>{headerLeft}</View>

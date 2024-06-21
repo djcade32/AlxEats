@@ -108,8 +108,8 @@ const _layout = () => {
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
-        name="restaurantDetails/[id]"
-        options={{ headerShown: true, headerTransparent: true }}
+        name="restaurantDetails"
+        options={{ headerShown: false, headerTransparent: true }}
       />
       <Stack.Screen
         name="(modals)/Filter/index"

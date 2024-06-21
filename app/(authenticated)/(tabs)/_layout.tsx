@@ -1,14 +1,11 @@
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity } from "react-native";
 import React, { useEffect, useState } from "react";
-import { Stack, Tabs, useRouter } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
-import CustomHeader from "@/components/CustomHeader";
 import CustomAuthenticatedHeader from "@/components/CustomAuthenticatedHeader";
 import * as Location from "expo-location";
-import { getAuth } from "firebase/auth";
 import { getDb } from "@/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
 
 const Layout = () => {
   const router = useRouter();

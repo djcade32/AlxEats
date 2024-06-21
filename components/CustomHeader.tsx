@@ -20,7 +20,7 @@ const CustomHeader = ({ title, headerLeft, headerRight, loading = false }: Custo
 
   return (
     <View style={[styles.container, { paddingTop: top }]}>
-      <TouchableOpacity onPress={() => router.back()} style={styles.iconContainer}>
+      <TouchableOpacity onPress={() => router.dismiss()} style={styles.iconContainer}>
         {headerLeft}
       </TouchableOpacity>
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
