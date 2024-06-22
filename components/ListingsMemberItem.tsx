@@ -6,6 +6,7 @@ import Font from "@/constants/Font";
 import { User } from "@/interfaces";
 import { followUser, unfollowUser } from "@/firebase";
 import { useAppStore } from "@/store/app-storage";
+import LoadingText from "./LoadingText";
 
 interface ListingsMemberItemProps {
   user: User;
@@ -17,12 +18,14 @@ const ListingsMemberItem = ({ user, ranking = false, tabScreenName }: ListingsMe
   const router = useRouter();
   const { userDbInfo, userFollowing } = useAppStore();
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handlPress = () => {
+  const handlePress = () => {
     router.push(`/${tabScreenName}/profile/${JSON.stringify(user.id)}`);
   };
 
   useEffect(() => {
+    if (!userDbInfo?.profilePic) return setIsLoading(false);
     //Determine if following user
     setIsFollowing(!!userFollowing?.find((id) => id === user.id));
   }, []);
@@ -47,40 +50,56 @@ const ListingsMemberItem = ({ user, ranking = false, tabScreenName }: ListingsMe
     <>
       {user.firstName ? (
         <View style={styles.container}>
-          <TouchableOpacity style={{ flexDirection: "row", flex: 1 }} onPress={handlPress}>
+          <TouchableOpacity style={{ flexDirection: "row", flex: 1 }} onPress={handlePress}>
             {user.profilePic ? (
-              <Image source={{ uri: user.profilePic }} style={styles.profilePicture} />
+              <Image
+                source={{ uri: user.profilePic }}
+                style={styles.profilePicture}
+                onLoad={() => setIsLoading(false)}
+              />
             ) : (
               <View
                 style={[styles.profilePicture, { justifyContent: "center", alignItems: "center" }]}
               >
-                <Text style={styles.profilePicturePlacholder}>
+                <Text style={styles.profilePicturePlaceholder}>
                   {user.firstName.charAt(0) + user.lastName.charAt(0)}
                 </Text>
               </View>
             )}
+
             <View style={{ marginLeft: 10 }}>
-              <Text style={styles.name}>
-                {user.firstName} {user.lastName}
-              </Text>
-              <Text style={styles.username} numberOfLines={1}>
-                @{user.firstName.toLowerCase()}.{user.lastName.toLowerCase()}
-              </Text>
+              <LoadingText
+                loading={isLoading}
+                textStyle={styles.name}
+                title={`${user.firstName} ${user.lastName}`}
+                containerStyle={{ width: 120, height: 25, borderRadius: 15, marginBottom: 5 }}
+              />
+              <LoadingText
+                loading={isLoading}
+                textStyle={styles.username}
+                title={`@${user.firstName.toLowerCase()}.${user.lastName.toLowerCase()}`}
+                containerStyle={{ width: 80, height: 15, borderRadius: 15 }}
+                numberOfLines={1}
+              />
             </View>
           </TouchableOpacity>
-          {ranking ? (
-            <View style={styles.rankingCircle}>
-              <Text style={styles.rankingText}>{ranking}</Text>
-            </View>
-          ) : (
-            <TouchableOpacity
-              style={[styles.followButton, isFollowing && { backgroundColor: Colors.primary }]}
-              onPress={handleFollowPressed}
-            >
-              <Text style={[styles.followText, isFollowing && { color: "white" }]}>
-                {isFollowing ? "Following" : "Follow"}
-              </Text>
-            </TouchableOpacity>
+          {!isLoading && (
+            <>
+              {ranking ? (
+                <View style={styles.rankingCircle}>
+                  <Text style={styles.rankingText}>{ranking}</Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.followButton, isFollowing && { backgroundColor: Colors.primary }]}
+                  onPress={handleFollowPressed}
+                >
+                  <Text style={[styles.followText, isFollowing && { color: "white" }]}>
+                    {isFollowing ? "Following" : "Follow"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
         </View>
       ) : (
@@ -107,7 +126,7 @@ const styles = StyleSheet.create({
     width: 52,
     borderRadius: 52 / 2,
     resizeMode: "cover",
-    backgroundColor: Colors.gray,
+    backgroundColor: Colors.lightGray,
   },
 
   name: {
@@ -115,7 +134,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: Colors.black,
     fontFamily: "nm-b",
-    marginBottom: 5,
   },
 
   username: {
@@ -154,7 +172,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 
-  profilePicturePlacholder: {
+  profilePicturePlaceholder: {
     fontSize: Font.medium,
     color: "white",
     fontFamily: "nm-b",

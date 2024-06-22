@@ -3,7 +3,7 @@ import React from "react";
 import Colors from "@/constants/Colors";
 import Font from "@/constants/Font";
 
-interface LoadingTextProps {
+interface LoadingTextProps extends TextProps {
   title: string;
   loading: boolean;
   textStyle: TextProps["style"];
