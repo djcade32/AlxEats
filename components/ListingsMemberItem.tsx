@@ -10,15 +10,16 @@ import { useAppStore } from "@/store/app-storage";
 interface ListingsMemberItemProps {
   user: User;
   ranking?: boolean;
+  tabScreenName: string;
 }
 
-const ListingsMemberItem = ({ user, ranking = false }: ListingsMemberItemProps) => {
+const ListingsMemberItem = ({ user, ranking = false, tabScreenName }: ListingsMemberItemProps) => {
   const router = useRouter();
   const { userDbInfo, userFollowing } = useAppStore();
   const [isFollowing, setIsFollowing] = useState(false);
 
   const handlPress = () => {
-    router.push(`/profile/${JSON.stringify(user.id)}`);
+    router.push(`/${tabScreenName}/profile/${JSON.stringify(user.id)}`);
   };
 
   useEffect(() => {

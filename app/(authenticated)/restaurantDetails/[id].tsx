@@ -507,7 +507,11 @@ const restaurantDetails = () => {
               )}
               ListHeaderComponent={HeaderComponent}
               renderItem={({ item }) => (
-                <ListingsMemberItem user={item.user} ranking={item.ranking} />
+                <ListingsMemberItem
+                  user={item.user}
+                  ranking={item.ranking}
+                  tabScreenName="(authenticated)/restaurantDetails"
+                />
               )}
               contentContainerStyle={{ paddingBottom: 20 }}
             />

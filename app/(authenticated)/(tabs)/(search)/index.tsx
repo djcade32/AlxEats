@@ -177,7 +177,7 @@ const search = () => {
     return (
       <>
         {viewMembers ? (
-          <ListingsMemberItem key={item.id} user={item} />
+          <ListingsMemberItem key={item.id} user={item} tabScreenName="(search)" />
         ) : (
           <ListingsRestaurantItem key={item.placeId} restaurant={item} isToTry={isToTry} />
         )}

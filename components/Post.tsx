@@ -210,9 +210,12 @@ const Post = ({ post }: PostProps) => {
       <View>
         <View style={styles.postActionsContainer}>
           {/* Left Side*/}
-          <View style={{ flexDirection: "row" }}>
+          <View style={{ flexDirection: "row", gap: 10 }}>
             <TouchableOpacity
-              style={{ flexDirection: "row", alignItems: "center" }}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+              }}
               onPress={handleLikePost}
             >
               <Ionicons
@@ -220,7 +223,7 @@ const Post = ({ post }: PostProps) => {
                 size={30}
                 color={Colors.primary}
               />
-              <View style={{ width: 15 }}>
+              <View>
                 <Text style={{ color: Colors.primary, fontSize: Font.small }}>
                   {numOfLikes > 0 ? numOfLikes : ""}
                 </Text>
