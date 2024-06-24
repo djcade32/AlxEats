@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Stack, useRouter } from "expo-router";
-import { getAuth } from "firebase/auth";
-import { checkIfEmailExists, getDb, getUserRestaurantsToTryList } from "@/firebase";
-import { collection, doc, getDocs, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { Stack } from "expo-router";
+import { getDb } from "@/firebase";
+import { collection, doc, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import CustomHeader from "@/components/CustomHeader";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
-import Font from "@/constants/Font";
-import { TouchableOpacity } from "react-native";
 import { useAppStore } from "@/store/app-storage";
 import { FeedPost } from "@/interfaces";
 
@@ -19,89 +16,104 @@ const _layout = () => {
     setUserFollowers,
     setUserFollowing,
     setUserPosts,
+    setAppLoading,
   } = useAppStore();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   // Get user to try restaurants
   useEffect(() => {
-    setUserToTryRestaurants([]);
+    (async () => {
+      setUserToTryRestaurants([]);
+      setUserTriedRestaurants([]);
+      setUserFollowing([]);
+      setUserFollowers([]);
+      setUserPosts([]);
 
-    if (!userDbInfo) return;
-    let db = getDb();
-    const q = query(collection(db!, `userRestaurants/${userDbInfo?.id}/toTry`));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        setUserToTryRestaurants(change.doc.data().data);
-        console.log("User to try restaurants retrieved");
-      });
-    });
-    return () => unsubscribe();
-  }, [userDbInfo]);
+      if (!userDbInfo) return;
+      let db = getDb();
 
-  // Get user tried restaurants
-  useEffect(() => {
-    if (!userDbInfo) return;
-    setUserTriedRestaurants([]);
+      const unsubscribeList: any = [];
 
-    let db = getDb();
-    const q = query(collection(db!, `userRestaurants/${userDbInfo?.id}/tried`));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        setUserTriedRestaurants(change.doc.data().data);
-        console.log("User tried restaurants retrieved");
-      });
-    });
+      const handleDataRetrieval = async () => {
+        let promises = [];
 
-    return () => unsubscribe();
-  }, [userDbInfo]);
+        let q = query(collection(db!, `userRestaurants/${userDbInfo.id}/toTry`));
+        promises.push(
+          new Promise((resolve) => {
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+              snapshot.docChanges().forEach((change) => {
+                setUserToTryRestaurants(change.doc.data().data);
+                console.log("User to try restaurants retrieved");
+              });
+              resolve("done");
+            });
+            unsubscribeList.push(unsubscribe);
+          })
+        );
 
-  // Get user followings
-  useEffect(() => {
-    if (!userDbInfo) return;
+        q = query(collection(db!, `userRestaurants/${userDbInfo.id}/tried`));
+        promises.push(
+          new Promise((resolve) => {
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+              snapshot.docChanges().forEach((change) => {
+                setUserTriedRestaurants(change.doc.data().data);
+                console.log("User tried restaurants retrieved");
+              });
+              resolve("done");
+            });
+            unsubscribeList.push(unsubscribe);
+          })
+        );
 
-    setUserFollowing([]);
-    let db = getDb();
-    const dbUrl = `followings/${userDbInfo?.id}`;
-    const userRef = doc(db!, dbUrl);
-    const unsubscribe = onSnapshot(userRef, (snapshot) => {
-      if (!snapshot.exists()) return;
-      setUserFollowing(snapshot.data().following);
-    });
+        let dbUrl = `followings/${userDbInfo.id}`;
+        let userRef = doc(db!, dbUrl);
+        promises.push(
+          new Promise((resolve) => {
+            const unsubscribe = onSnapshot(userRef, (snapshot) => {
+              if (!snapshot.exists()) return;
+              setUserFollowing(snapshot.data().following);
+              resolve("done");
+            });
+            unsubscribeList.push(unsubscribe);
+          })
+        );
 
-    return () => unsubscribe();
-  }, [userDbInfo]);
+        promises.push(
+          new Promise((resolve) => {
+            const unsubscribe = onSnapshot(userRef, (snapshot) => {
+              if (!snapshot.exists()) return;
+              setUserFollowers(snapshot.data().followedBy);
+              resolve("done");
+            });
+            unsubscribeList.push(unsubscribe);
+          })
+        );
 
-  // Get user followers
-  useEffect(() => {
-    if (!userDbInfo) return;
+        q = query(
+          collection(db!, `feed`),
+          where("userId", "==", userDbInfo.id),
+          orderBy("createdAt", "desc")
+        );
+        promises.push(
+          new Promise((resolve) => {
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+              setUserPosts([...snapshot.docs.map((doc) => doc.data() as FeedPost)]);
+              console.log("User's posts retrieved");
+              resolve("done");
+            });
+            unsubscribeList.push(unsubscribe);
+          })
+        );
 
-    setUserFollowers([]);
+        await Promise.all(promises);
+        setAppLoading(false);
+      };
 
-    let db = getDb();
-    const dbUrl = `followings/${userDbInfo?.id}`;
-    const userRef = doc(db!, dbUrl);
-    const unsubscribe = onSnapshot(userRef, (snapshot) => {
-      if (!snapshot.exists()) return;
-      setUserFollowers(snapshot.data().followedBy);
-    });
+      handleDataRetrieval();
 
-    return () => unsubscribe();
-  }, [userDbInfo]);
-
-  //Get user posts
-  useEffect(() => {
-    if (!userDbInfo) return;
-    let db = getDb();
-    const q = query(
-      collection(db!, `feed`),
-      where("userId", "==", userDbInfo.id),
-      orderBy("createdAt", "desc")
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setUserPosts([...snapshot.docs.map((doc) => doc.data() as FeedPost)]);
-      console.log("User's posts retrieved");
-    });
-
-    return () => unsubscribe();
+      return () => {
+        unsubscribeList.forEach((unsubscribe: any) => unsubscribe());
+      };
+    })();
   }, [userDbInfo]);
 
   return (
@@ -113,7 +125,11 @@ const _layout = () => {
       />
       <Stack.Screen
         name="(modals)/Filter/index"
-        options={{ headerShown: true, headerTransparent: true, presentation: "fullScreenModal" }}
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          presentation: "fullScreenModal",
+        }}
       />
       <Stack.Screen
         name="(modals)/Filter/cuisinesFilter"

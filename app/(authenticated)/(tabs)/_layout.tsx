@@ -37,7 +37,7 @@ const Layout = () => {
 
   return (
     <Tabs
-      initialRouteName="home"
+      initialRouteName="(home)"
       screenOptions={{
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.gray,
@@ -48,19 +48,11 @@ const Layout = () => {
       }}
     >
       <Tabs.Screen
-        name="home"
+        name="(home)"
         options={{
           title: "Home",
           tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
-          header: () => (
-            <CustomAuthenticatedHeader
-              headerRight={
-                <TouchableOpacity>
-                  <Ionicons name="notifications-outline" size={22} color={Colors.black} />
-                </TouchableOpacity>
-              }
-            />
-          ),
+          headerShown: false,
         }}
       />
       <Tabs.Screen

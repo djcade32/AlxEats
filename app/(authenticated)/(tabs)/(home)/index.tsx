@@ -1,33 +1,34 @@
-import { RefreshControl, StyleSheet, View } from "react-native";
+import { RefreshControl, StyleSheet, Text, View } from "react-native";
 import React, { useCallback, useEffect, useState } from "react";
 import { FlatList } from "react-native-gesture-handler";
-import { postData as POST_DATA } from "@/assets/data/dummyData";
 import Post from "@/components/Post";
 import { getFeed } from "@/firebase";
 import { useAppStore } from "@/store/app-storage";
 import { FeedPost } from "@/interfaces";
 import Colors from "@/constants/Colors";
+import Font from "@/constants/Font";
 
 const home = () => {
-  const { userDbInfo } = useAppStore();
+  const { userDbInfo, userFollowing, userPosts, appLoading } = useAppStore();
   const [feed, setFeed] = useState<FeedPost[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    if (!userDbInfo) return;
-
+    if (!userDbInfo || appLoading) return;
     (async () => setFeed(await getFeed(userDbInfo?.id)))();
-  }, []);
+  }, [userFollowing, userPosts, appLoading]);
   const onRefresh = useCallback(() => {
-    console.log("Refreshing");
     setRefreshing(true);
     (async () => setFeed(await getFeed(userDbInfo!.id)))().then(() => setRefreshing(false));
   }, []);
   return (
     <View style={styles.container}>
+      {/* {appLoading === true ? (
+        <></>
+      ) : ( */}
       <FlatList
         data={feed}
-        contentContainerStyle={styles.flatListContainer}
+        contentContainerStyle={[styles.flatListContainer, { flexGrow: 1 }]}
         showsVerticalScrollIndicator={false}
         contentInset={{ top: 15, bottom: 20 }}
         renderItem={({ item }) => <Post post={item} />}
@@ -41,7 +42,17 @@ const home = () => {
             tintColor={Colors.primary} // Customize the spinner color for iOS
           />
         }
+        ListEmptyComponent={() => (
+          <>
+            {!appLoading && (
+              <View style={{ flex: 1, justifyContent: "center", alignItems: "center", gap: 10 }}>
+                <Text style={{ color: Colors.gray, fontSize: Font.medium }}>No post to view.</Text>
+              </View>
+            )}
+          </>
+        )}
       />
+      {/* )} */}
     </View>
   );
 };

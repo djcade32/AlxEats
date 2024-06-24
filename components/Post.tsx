@@ -75,6 +75,11 @@ const Post = ({ post }: PostProps) => {
     if (!isTried) setIsToTry(checkIfUserToTryRestaurant(post.restaurantId));
   }, [userPosts]);
 
+  const handleUserPress = () => {
+    if (!user) return console.log("User not found");
+    router.push(`(home)/profile/${JSON.stringify(user?.id)}`);
+  };
+
   const handlePostPress = () => {
     router.push({
       pathname: `/restaurantDetails/${JSON.stringify(post.restaurantId)}`,
@@ -164,7 +169,7 @@ const Post = ({ post }: PostProps) => {
         {/* Post details */}
         <View style={{ flex: 1 }}>
           <View style={styles.detailsContainer}>
-            <TouchableOpacity disabled={user?.id === userDbInfo?.id}>
+            <TouchableOpacity disabled={user?.id === userDbInfo?.id} onPress={handleUserPress}>
               <Text style={styles.importantText}>
                 {user?.id === userDbInfo?.id ? "You" : user?.firstName}{" "}
               </Text>

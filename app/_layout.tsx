@@ -44,7 +44,7 @@ function InitialLayout() {
     nycd: require("../assets/fonts/NothingYouCouldDo-Regular.ttf"),
   });
   const router = useRouter();
-  const { setAuthUser, setUserDbInfo, setUserToTryRestaurants } = useAppStore();
+  const { setAuthUser, setUserDbInfo, setAppLoading } = useAppStore();
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
@@ -71,8 +71,8 @@ function InitialLayout() {
             setUserDbInfo({ ...exists, criteria: JSON.parse(exists.criteria) });
           }
           // router.replace("/(authenticated)/(tabs)/currentUser");
-
-          exists ? router.replace("/(authenticated)/home") : router.replace("(onboarding)/");
+          setAppLoading(true);
+          exists ? router.replace("/(authenticated)/(home)/") : router.replace("(onboarding)/");
         });
         // router.replace("/(authenticated)/(modals)/RankRestaurant/selectedPhotos");
       }

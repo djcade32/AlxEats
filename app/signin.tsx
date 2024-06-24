@@ -16,7 +16,7 @@ import { checkIfEmailExists, sendEmailVerification, signIn } from "@/firebase";
 import { FirebaseError } from "firebase/app";
 
 const signin = () => {
-  const { pendingEmailVerification, setPendingEmailVerification } = useAppStore();
+  const { pendingEmailVerification, setPendingEmailVerification, setAppLoading } = useAppStore();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,9 +47,10 @@ const signin = () => {
         sendEmailVerification().then(() => setPendingEmailVerification(true));
         return;
       }
-      checkIfEmailExists().then((exists) =>
-        exists ? router.replace("/(authenticated)/home") : router.replace("(onboarding)/")
-      );
+      checkIfEmailExists().then((exists) => {
+        setAppLoading(true);
+        exists ? router.replace("/(authenticated)/(home)/") : router.replace("(onboarding)/");
+      });
       console.log("signed in");
     } catch (error: any) {
       const err: FirebaseError = error;

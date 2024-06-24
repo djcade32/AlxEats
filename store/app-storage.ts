@@ -7,6 +7,8 @@ import { FeedPost, RestaurantRankingPayload, User as UserDb } from "@/interfaces
 import { DocumentData } from "firebase/firestore";
 
 export interface AppState {
+  appLoading: boolean;
+  setAppLoading: (loading: boolean) => void;
   authUser: User | null;
   setAuthUser: (user: User | null) => void;
   userDbInfo: UserDb | null;
@@ -33,6 +35,10 @@ export interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
+      appLoading: true,
+      setAppLoading: (loading: boolean) => {
+        set({ appLoading: loading });
+      },
       signInMethod: SignInMethods.Email,
       updateSignInMethod: (method: SignInMethods) => {
         set({ signInMethod: method });
