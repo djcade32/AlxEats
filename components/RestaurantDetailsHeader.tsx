@@ -1,9 +1,7 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TouchableOpacity } from "react-native-gesture-handler";
-import Font from "@/constants/Font";
-import { Stack, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 
 interface RestaurantDetailsHeaderProps {
   headerLeft?: React.ReactNode;
@@ -12,7 +10,6 @@ interface RestaurantDetailsHeaderProps {
 
 const RestaurantDetailsHeader = ({ headerLeft, headerRight }: RestaurantDetailsHeaderProps) => {
   const { top } = useSafeAreaInsets();
-  const router = useRouter();
 
   return (
     <Stack.Screen

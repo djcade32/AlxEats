@@ -10,7 +10,7 @@ import {
   Alert,
   ScrollView,
 } from "react-native";
-import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import RestaurantDetailsHeader from "@/components/RestaurantDetailsHeader";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -28,7 +28,7 @@ import Cuisines from "@/data/Cuisines";
 import { capitalizeFirstLetter, distanceBetweenCoordinates, uploadImages } from "@/common-utils";
 import openMap from "react-native-open-maps";
 import * as ExpoLinking from "expo-linking";
-import * as Location from "expo-location";
+import { Share } from "react-native";
 import {
   checkIfRestaurantInList,
   getUserById,
@@ -41,8 +41,6 @@ import { useRestaurantRankingStore } from "@/store/restaurantRanking-storage";
 import * as ImagePicker from "expo-image-picker";
 import Dropdown from "@/components/Dropdown";
 import useRestaurantEffect from "@/hooks/useRestaurantEffect";
-
-const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
 const restaurantDetails = () => {
   let restaurantObj = useLocalSearchParams<any>().restaurant as any;
@@ -362,6 +360,31 @@ const restaurantDetails = () => {
     });
   };
 
+  const shareContent = async (message, url) => {
+    try {
+      const result = await Share.share({
+        message: message,
+        // url: url,
+        title: message,
+      });
+
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          // shared with activity type of result.activityType
+          console.log("Shared with activity type: ", result.activityType);
+        } else {
+          // shared
+          console.log("Content shared");
+        }
+      } else if (result.action === Share.dismissedAction) {
+        // dismissed
+        console.log("Share dismissed");
+      }
+    } catch (error: any) {
+      console.error("Error sharing content: ", error.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <RestaurantDetailsHeader
@@ -372,7 +395,14 @@ const restaurantDetails = () => {
         }
         headerRight={
           <View style={{ flexDirection: "row", gap: 8 }}>
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() =>
+                shareContent(
+                  `Check out ${restaurant?.name || restaurantObj.name} on Alx Eats`,
+                  "test"
+                )
+              }
+            >
               <Ionicons name="share-outline" size={35} color={Colors.black} />
             </TouchableOpacity>
             <TouchableOpacity>

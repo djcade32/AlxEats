@@ -50,7 +50,11 @@ const ListingsMemberItem = ({ user, ranking = false, tabScreenName }: ListingsMe
     <>
       {user.firstName ? (
         <View style={styles.container}>
-          <TouchableOpacity style={{ flexDirection: "row", flex: 1 }} onPress={handlePress}>
+          <TouchableOpacity
+            disabled={isLoading}
+            style={{ flexDirection: "row", flex: 1 }}
+            onPress={handlePress}
+          >
             {user.profilePic ? (
               <Image
                 source={{ uri: user.profilePic }}
@@ -93,6 +97,7 @@ const ListingsMemberItem = ({ user, ranking = false, tabScreenName }: ListingsMe
                 <TouchableOpacity
                   style={[styles.followButton, isFollowing && { backgroundColor: Colors.primary }]}
                   onPress={handleFollowPressed}
+                  disabled={isLoading}
                 >
                   <Text style={[styles.followText, isFollowing && { color: "white" }]}>
                     {isFollowing ? "Following" : "Follow"}

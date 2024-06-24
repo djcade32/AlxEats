@@ -861,3 +861,35 @@ export const checkIfUserLikedPost = async (userId: string, postId: string): Prom
     return Promise.reject(`Error: ${error.message}`);
   }
 };
+
+export const getFeed = async (currentUserId: string) => {
+  try {
+    const db = getDb();
+    if (!db) return Promise.reject("Error: Database not found");
+
+    const following = await getUserFollowings(currentUserId);
+    following.push(currentUserId);
+
+    if (following.length > 0) {
+      const activitiesRef = collection(db, "feed");
+      const q = query(
+        activitiesRef,
+        where("userId", "in", following),
+        orderBy("createdAt", "desc")
+      );
+
+      const querySnapshot = await getDocs(q);
+      const feed = querySnapshot.docs.map((doc) => doc.data() as FeedPost);
+
+      // Optionally, cache the feed data
+      // const feedRef = doc(db, "feed", currentUserId);
+      // await setDoc(feedRef, { feed }, { merge: true });
+
+      return feed;
+    }
+    return [];
+  } catch (error) {
+    console.log("Error getting feed: ", error);
+    return Promise.reject(error);
+  }
+};

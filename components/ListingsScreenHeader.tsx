@@ -1,18 +1,10 @@
-import { StyleSheet, Text, View, SafeAreaView, TouchableOpacity, Alert } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import { StyleSheet, View, SafeAreaView, TouchableOpacity } from "react-native";
+import React, { useRef, useState } from "react";
 import Switch from "./Switch";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import CustomTextInput from "./CustomTextInput";
-import { Stack, router, useRouter } from "expo-router";
-import {
-  GooglePlacesAutocomplete,
-  GooglePlacesAutocompleteRef,
-} from "react-native-google-places-autocomplete";
-// import Geolocation from "@react-native-community/geolocation";
-import { types } from "@babel/core";
-
-const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+import { Stack, useRouter } from "expo-router";
 
 interface ListingsScreenHeaderProps {
   searchText: string;
@@ -31,18 +23,7 @@ const ListingsScreenHeader = ({
   switchValues,
   showFilter = true,
 }: ListingsScreenHeaderProps) => {
-  const ref = useRef<any>();
   const router = useRouter();
-  const [location, setLocation] = useState<any>(null);
-  // Geolocation.setRNConfiguration({
-  //   skipPermissionRequests: false,
-  //   authorizationLevel: "auto",
-  //   enableBackgroundLocationUpdates: true,
-  //   locationProvider: "auto",
-  // });
-  const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
-
-  // Geolocation.getCurrentPosition((info) => {});
 
   return (
     <Stack.Screen

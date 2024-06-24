@@ -25,7 +25,7 @@ const search = () => {
   const [viewMembers, setViewMembers] = useState(0);
   const [restaurantData, setRestaurantData] = useState<any>([]);
   const [filteredRestaurantData, setFilteredRestaurantData] = useState<any>([]);
-  const [allUsersPagination, setAllUsersPagination] = useState<FetchUsersPayload | null>(null);
+  const [allUsersPagination, setAllUsersPagination] = useState<FetchUsersPayload | null>([null]);
   const [filteredAllUser, setFilteredAllUsers] = useState<User[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [pageToken, setPageToken] = useState<string | null>(null);
@@ -237,6 +237,7 @@ const search = () => {
           <>
             {viewMembers ? (
               <FlatList
+                style={{ display: loading ? "none" : "flex" }}
                 contentContainerStyle={[
                   { paddingTop: 75 },
                   !filteredAllUser?.length && { flex: 1 },
@@ -258,6 +259,7 @@ const search = () => {
               />
             ) : (
               <FlatList
+                style={{ display: loading ? "none" : "flex" }}
                 contentContainerStyle={[
                   { paddingTop: 75 },
                   !filteredRestaurantData.length && { flex: 1 },

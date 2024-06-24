@@ -31,8 +31,14 @@ interface PostProps {
 }
 
 const Post = ({ post }: PostProps) => {
-  const { userDbInfo, userPosts, checkIfUserTriedRestaurant, checkIfUserToTryRestaurant } =
-    useAppStore();
+  const {
+    userDbInfo,
+    userPosts,
+    checkIfUserTriedRestaurant,
+    checkIfUserToTryRestaurant,
+    userToTryRestaurants,
+    userTriedRestaurants,
+  } = useAppStore();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
@@ -64,7 +70,9 @@ const Post = ({ post }: PostProps) => {
   }, []);
   useEffect(() => {
     if (loading) return;
-    checkIfUserTriedRestaurant(post.restaurantId) ? setIsTried(true) : setIsTried(false);
+    const isTried = checkIfUserTriedRestaurant(post.restaurantId);
+    if (isTried) setIsTried(true);
+    if (!isTried) setIsToTry(checkIfUserToTryRestaurant(post.restaurantId));
   }, [userPosts]);
 
   const handlePostPress = () => {
@@ -149,9 +157,9 @@ const Post = ({ post }: PostProps) => {
       {/* Post content */}
       <View style={{ flexDirection: "row", gap: 8 }}>
         {/* Profile picture */}
-        <TouchableOpacity style={styles.profilePicture}>
+        <View style={styles.profilePicture}>
           <Image source={{ uri: user?.profilePic }} style={styles.profilePicture} />
-        </TouchableOpacity>
+        </View>
 
         {/* Post details */}
         <View style={{ flex: 1 }}>

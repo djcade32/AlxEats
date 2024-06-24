@@ -16,21 +16,16 @@ interface Section {
   content: JSX.Element;
 }
 
-const THUMB_RADIUS_LOW = 12;
-const THUMB_RADIUS_HIGH = 16;
-
 interface CustomAccordionProps {
   filterState: RestaurantListFilterPayload;
   setFilterState: (filter: RestaurantListFilterPayload) => void;
 }
 
 const CustomAccordion = ({ filterState, setFilterState }: CustomAccordionProps) => {
-  const { updateRestaurantListFilter, restaurantListFilter } = useFilterStore();
+  const { restaurantListFilter } = useFilterStore();
   const [activeSections, setActiveSections] = useState<number[]>([]);
   const [sortby, setSortby] = useState<RestaurantFilterSortByTypes>(restaurantListFilter.sortBy);
   const [price, setPrice] = useState<string>(restaurantListFilter.priceMax);
-  // const [searchText, setSearchText] = useState("");
-  // const [cuisines, setCuisines] = useState<string[]>([]);
   const [focusedInput, setFocusedInput] = useState<string>("");
   const [minScore, setMinScore] = useState<number>(restaurantListFilter.scoreRange.min);
   const [maxScore, setMaxScore] = useState<number>(restaurantListFilter.scoreRange.max);
@@ -258,7 +253,7 @@ const CustomAccordion = ({ filterState, setFilterState }: CustomAccordionProps) 
       title: (
         <>
           <Text>Score</Text>{" "}
-          {activeSections.includes(2) && (
+          {activeSections.includes(3) && (
             <Text style={[styles.textSmall, { color: Colors.gray, fontSize: Font.small }]}>
               Must be between 0 and 100
             </Text>
@@ -350,6 +345,7 @@ const CustomAccordion = ({ filterState, setFilterState }: CustomAccordionProps) 
       renderContent={renderContent}
       onChange={(sections) => setActiveSections(sections)}
       sectionContainerStyle={styles.accordContainer}
+      expandMultiple={true}
     />
   );
 };
