@@ -1,4 +1,4 @@
-import { ActivityIndicator, Button, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import ListingsBottomSheet from "@/components/ListingsBottomSheet";
@@ -12,6 +12,7 @@ import { distanceBetweenCoordinates } from "@/common-utils";
 import Colors from "@/constants/Colors";
 import { useFilterStore } from "@/store/filter-storage";
 import { restaurantPriceLevels } from "@/mappings";
+import { Ionicons } from "@expo/vector-icons";
 
 const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
@@ -336,8 +337,18 @@ const yourLists = () => {
         activeToggle={viewToTry}
         setActiveToggle={setViewToTry}
         switchValues={[
-          { label: "Tried", icon: "checkmark-circle" },
-          { label: "To try", icon: "bookmark" },
+          {
+            label: "Tried",
+            icon: <Ionicons name="checkmark-circle" size={18} />,
+            activeColor: Colors.primary,
+            inactiveColor: "white",
+          },
+          {
+            label: "To try",
+            icon: <Ionicons name="bookmark" size={18} />,
+            activeColor: Colors.primary,
+            inactiveColor: "white",
+          },
         ]}
       />
       <>

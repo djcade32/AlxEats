@@ -6,13 +6,19 @@ import Colors from "@/constants/Colors";
 import CustomTextInput from "./CustomTextInput";
 import { Stack, useRouter } from "expo-router";
 
-interface ListingsScreenHeaderProps {
+interface FollowingsScreenHeaderProps {
   searchText: string;
   setSearchText: (text: string) => void;
   activeToggle: number;
   setActiveToggle: (viewMembers: number) => void;
-  switchValues: { label: string; icon: string }[];
+  switchValues: {
+    label: string;
+    icon: React.ReactElement;
+    activeColor: string;
+    inactiveColor: string;
+  }[];
   showFilter?: boolean;
+  showBackButton?: boolean;
 }
 
 const ListingsScreenHeader = ({
@@ -22,7 +28,8 @@ const ListingsScreenHeader = ({
   setActiveToggle,
   switchValues,
   showFilter = true,
-}: ListingsScreenHeaderProps) => {
+  showBackButton = false,
+}: FollowingsScreenHeaderProps) => {
   const router = useRouter();
 
   return (
@@ -39,7 +46,19 @@ const ListingsScreenHeader = ({
                   justifyContent: "center",
                 }}
               >
-                <Switch setToggleActive={setActiveToggle} values={switchValues} />
+                {showBackButton && (
+                  <TouchableOpacity
+                    style={[styles.filterIconContainer, { left: 15 }]}
+                    onPress={() => router.back()}
+                  >
+                    <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />
+                  </TouchableOpacity>
+                )}
+                <Switch
+                  setToggleActive={setActiveToggle}
+                  values={switchValues}
+                  activeToggle={activeToggle}
+                />
                 {showFilter && (
                   <TouchableOpacity
                     style={styles.filterIconContainer}

@@ -75,8 +75,9 @@ const Layout = () => {
       />
 
       <Tabs.Screen
-        name="currentUser"
+        name="(currentUser)"
         options={{
+          headerShown: false,
           title: "Profile",
           tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
         }}

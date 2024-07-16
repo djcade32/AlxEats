@@ -252,7 +252,7 @@ const CustomAccordion = ({ filterState, setFilterState }: CustomAccordionProps) 
       icon: <Ionicons name="stats-chart-outline" size={20} color={Colors.black} />,
       title: (
         <>
-          <Text>Score</Text>{" "}
+          <Text>Score</Text>
           {activeSections.includes(3) && (
             <Text style={[styles.textSmall, { color: Colors.gray, fontSize: Font.small }]}>
               Must be between 0 and 100

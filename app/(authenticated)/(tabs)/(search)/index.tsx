@@ -13,6 +13,7 @@ import { fetchUsers } from "@/firebase";
 import { getAuth } from "firebase/auth";
 import { distanceBetweenCoordinates } from "@/common-utils";
 import { useAppStore } from "@/store/app-storage";
+import { Ionicons } from "@expo/vector-icons";
 
 const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
@@ -222,8 +223,18 @@ const search = () => {
         activeToggle={viewMembers}
         setActiveToggle={setViewMembers}
         switchValues={[
-          { label: "Restaurants", icon: "storefront" },
-          { label: "Members", icon: "person" },
+          {
+            label: "Restaurants",
+            icon: <Ionicons name="storefront" size={18} />,
+            activeColor: Colors.primary,
+            inactiveColor: "white",
+          },
+          {
+            label: "Members",
+            icon: <Ionicons name="person" size={18} />,
+            activeColor: Colors.primary,
+            inactiveColor: "white",
+          },
         ]}
         showFilter={false}
       />

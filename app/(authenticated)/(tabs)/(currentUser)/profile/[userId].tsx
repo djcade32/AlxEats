@@ -8,65 +8,81 @@ import {
   ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import { Stack, useRouter } from "expo-router";
-import CustomAuthenticatedHeader from "@/components/CustomAuthenticatedHeader";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
+import Font from "@/constants/Font";
+import CustomHeader from "@/components/CustomHeader";
 import { FeedPost, User } from "@/interfaces";
-import { getUserPosts } from "@/firebase";
+import { getUserById, getUserFollowers, getUserFollowings, getUserPosts } from "@/firebase";
 import LoadingText from "@/components/LoadingText";
 import { getAuth } from "firebase/auth";
-import { useAppStore } from "@/store/app-storage";
 import Post from "@/components/Post";
-import Font from "@/constants/Font";
 
-const currentUser = () => {
-  const {
-    userDbInfo,
-    userToTryRestaurants,
-    userTriedRestaurants,
-    userFollowers,
-    userFollowing,
-    userPosts,
-  } = useAppStore();
+const profile = () => {
+  let userId = JSON.parse(useLocalSearchParams<any>().userId as string);
   const [loading, setLoading] = useState(true);
   const [isCurrentUser, setIsCurrentUser] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  // const [userPosts, setUserPosts] = useState<FeedPost[]>([]);
-  const router = useRouter();
+  const [userPosts, setUserPosts] = useState<FeedPost[]>([]);
+  const [userFollowings, setUserFollowings] = useState<string[]>([]);
+  const [userFollowers, setUserFollowers] = useState<string[]>([]);
 
   useEffect(() => {
-    setIsCurrentUser(userDbInfo?.id === getAuth().currentUser?.uid);
-    setUser(userDbInfo);
-    setLoading(false);
-  }, [userPosts]);
+    setIsCurrentUser(userId === getAuth().currentUser?.uid);
+    (async () => {
+      const user = await getUserById(userId);
+      setUser(user);
+      setUserFollowings(await getUserFollowings(userId));
+      setUserFollowers(await getUserFollowers(userId));
+      getPosts(user).then(() => setTimeout(() => setLoading(false), 2000));
+    })();
+  }, []);
 
+  const getPosts = async (user: User | null) => {
+    try {
+      if (!user) return console.log("User not found");
+      getUserPosts(user.id).then((posts) => {
+        setUserPosts([...posts]);
+      });
+    } catch (error) {
+      console.log("Error getting user posts: ", error);
+    }
+  };
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
       <Stack.Screen
         options={{
           header: () => (
-            <CustomAuthenticatedHeader
-              headerRight={
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <TouchableOpacity>
-                    <Ionicons name="share-outline" size={22} color={Colors.black} />
-                  </TouchableOpacity>
-                  <TouchableOpacity>
-                    <Ionicons name="notifications-outline" size={22} color={Colors.black} />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => router.push("/settings")}>
-                    <Ionicons name="settings-outline" size={22} color={Colors.black} />
-                  </TouchableOpacity>
-                </View>
+            <CustomHeader
+              title={`@${user?.firstName}.${user?.lastName}`}
+              headerLeft={
+                <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />
               }
+              loading={loading}
             />
           ),
         }}
       ></Stack.Screen>
       <View>
-        <View style={styles.profileContainer}>
-          <Image source={{ uri: user?.profilePic }} style={styles.profileImage} />
+        <View
+          style={{
+            flexDirection: "row",
+            paddingHorizontal: 22,
+            paddingVertical: 10,
+            alignItems: "center",
+          }}
+        >
+          <Image
+            source={{ uri: user?.profilePic }}
+            style={{
+              height: 106,
+              width: 106,
+              borderRadius: 53,
+              resizeMode: "cover",
+              backgroundColor: Colors.lightGray,
+            }}
+          />
           <View style={{ marginLeft: 12, marginTop: 10 }}>
             <View>
               <LoadingText
@@ -84,7 +100,18 @@ const currentUser = () => {
             />
 
             {isCurrentUser && (
-              <TouchableOpacity style={styles.editProfileButton}>
+              <TouchableOpacity
+                style={{
+                  alignItems: "center",
+                  paddingVertical: 3,
+                  paddingHorizontal: 10,
+                  borderRadius: 25,
+                  marginTop: 10,
+                  borderWidth: 1,
+                  borderColor: Colors.gray,
+                  width: 120,
+                }}
+              >
                 <Text
                   style={{
                     color: Colors.gray,
@@ -98,34 +125,41 @@ const currentUser = () => {
           </View>
         </View>
 
-        <View style={styles.profileStatsContainer}>
-          <TouchableOpacity style={{ alignItems: "center", flex: 1 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-around",
+            marginTop: 20,
+            paddingBottom: 10,
+          }}
+        >
+          <View style={{ alignItems: "center", flex: 1 }}>
             <LoadingText
-              title={`${userFollowers.length}`}
+              title={userFollowers.length.toString()}
               loading={loading}
               textStyle={{ fontSize: 20, fontFamily: "nm-b" }}
               containerStyle={{ height: 23, width: 25, borderRadius: 10 }}
             />
             <Text style={{ color: Colors.gray }}>Followers</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{ alignItems: "center", flex: 1 }}>
+          </View>
+          <View style={{ alignItems: "center", flex: 1 }}>
             <LoadingText
-              title={`${userFollowing.length}`}
+              title={userFollowings.length.toString()}
               loading={loading}
               textStyle={{ fontSize: 20, fontFamily: "nm-b" }}
               containerStyle={{ height: 23, width: 25, borderRadius: 10 }}
             />
             <Text style={{ color: Colors.gray }}>Following</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{ alignItems: "center", flex: 1 }}>
+          </View>
+          <View style={{ alignItems: "center", flex: 1 }}>
             <LoadingText
-              title={`${userTriedRestaurants.length}`}
+              title={userPosts.length.toString()}
               loading={loading}
               textStyle={{ fontSize: 20, fontFamily: "nm-b" }}
               containerStyle={{ height: 23, width: 25, borderRadius: 10 }}
             />
             <Text style={{ color: Colors.gray }}>Scored</Text>
-          </TouchableOpacity>
+          </View>
         </View>
       </View>
       <FlatList
@@ -139,7 +173,7 @@ const currentUser = () => {
               <ActivityIndicator color={Colors.primary} size={"small"} />
             ) : (
               <Text style={{ color: Colors.gray, fontSize: Font.medium }}>
-                You have no posts yet
+                This user has no posts
               </Text>
             )}
           </View>
@@ -149,42 +183,9 @@ const currentUser = () => {
   );
 };
 
-export default currentUser;
+export default profile;
 
 const styles = StyleSheet.create({
-  profileContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 22,
-    paddingVertical: 10,
-    alignItems: "center",
-  },
-
-  profileImage: {
-    height: 106,
-    width: 106,
-    borderRadius: 53,
-    resizeMode: "cover",
-    backgroundColor: Colors.lightGray,
-  },
-
-  editProfileButton: {
-    alignItems: "center",
-    paddingVertical: 3,
-    paddingHorizontal: 10,
-    borderRadius: 25,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: Colors.gray,
-    width: 120,
-  },
-
-  profileStatsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: 20,
-    paddingBottom: 10,
-  },
-
   postContainer: {
     width: 351,
     height: 160,
@@ -201,10 +202,10 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginVertical: 15,
   },
+
   flatListContainer: {
     alignItems: "center",
     gap: 15,
     paddingTop: 15,
-    paddingBottom: 15,
   },
 });
