@@ -51,6 +51,10 @@ const currentUser = () => {
       },
     });
   };
+  const handleScoredPress = () => {
+    if (!user) return;
+    router.push({ pathname: "/scored", params: { userId: JSON.stringify(user.id) } });
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
@@ -134,7 +138,10 @@ const currentUser = () => {
             />
             <Text style={{ color: Colors.gray }}>Following</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={{ alignItems: "center", flex: 1 }}>
+          <TouchableOpacity
+            style={{ alignItems: "center", flex: 1 }}
+            onPress={() => handleScoredPress()}
+          >
             <LoadingText
               title={`${userTriedRestaurants.length}`}
               loading={loading}

@@ -51,7 +51,7 @@ const ListingsScreenHeader = ({
                     style={[styles.filterIconContainer, { left: 15 }]}
                     onPress={() => router.back()}
                   >
-                    <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />
+                    <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.primary} />
                   </TouchableOpacity>
                 )}
                 <Switch

@@ -62,6 +62,11 @@ const profile = () => {
       },
     });
   };
+
+  const handleScoredPress = () => {
+    if (!user) return;
+    router.push({ pathname: "/scored", params: { userId: JSON.stringify(user.id) } });
+  };
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
       <Stack.Screen
@@ -170,7 +175,10 @@ const profile = () => {
             />
             <Text style={{ color: Colors.gray }}>Following</Text>
           </TouchableOpacity>
-          <View style={{ alignItems: "center", flex: 1 }}>
+          <TouchableOpacity
+            style={{ alignItems: "center", flex: 1 }}
+            onPress={() => handleScoredPress()}
+          >
             <LoadingText
               title={userPosts.length.toString()}
               loading={loading}
@@ -178,7 +186,7 @@ const profile = () => {
               containerStyle={{ height: 23, width: 25, borderRadius: 10 }}
             />
             <Text style={{ color: Colors.gray }}>Scored</Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
       <FlatList
