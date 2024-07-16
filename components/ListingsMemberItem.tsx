@@ -16,6 +16,7 @@ interface ListingsMemberItemProps {
 
 const ListingsMemberItem = ({ user, ranking = false, tabScreenName }: ListingsMemberItemProps) => {
   const router = useRouter();
+
   const { userDbInfo, userFollowing } = useAppStore();
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,15 +95,20 @@ const ListingsMemberItem = ({ user, ranking = false, tabScreenName }: ListingsMe
                   <Text style={styles.rankingText}>{ranking}</Text>
                 </View>
               ) : (
-                <TouchableOpacity
-                  style={[styles.followButton, isFollowing && { backgroundColor: Colors.primary }]}
-                  onPress={handleFollowPressed}
-                  disabled={isLoading}
-                >
-                  <Text style={[styles.followText, isFollowing && { color: "white" }]}>
-                    {isFollowing ? "Following" : "Follow"}
-                  </Text>
-                </TouchableOpacity>
+                userDbInfo?.id !== user.id && (
+                  <TouchableOpacity
+                    style={[
+                      styles.followButton,
+                      isFollowing && { backgroundColor: Colors.primary },
+                    ]}
+                    onPress={handleFollowPressed}
+                    disabled={isLoading}
+                  >
+                    <Text style={[styles.followText, isFollowing && { color: "white" }]}>
+                      {isFollowing ? "Following" : "Follow"}
+                    </Text>
+                  </TouchableOpacity>
+                )
               )}
             </>
           )}

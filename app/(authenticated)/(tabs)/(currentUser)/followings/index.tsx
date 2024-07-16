@@ -76,7 +76,6 @@ const search = () => {
   }, [searchText]);
 
   const renderRowItem = ({ item }: any) => {
-    if (item.email && item.email === getAuth().currentUser?.email) return null;
     return <ListingsMemberItem key={item.id} user={item} tabScreenName="(currentUser)" />;
   };
 

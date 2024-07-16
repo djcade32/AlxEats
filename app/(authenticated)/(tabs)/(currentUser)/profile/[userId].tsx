@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import Font from "@/constants/Font";
@@ -18,9 +18,11 @@ import { getUserById, getUserFollowers, getUserFollowings, getUserPosts } from "
 import LoadingText from "@/components/LoadingText";
 import { getAuth } from "firebase/auth";
 import Post from "@/components/Post";
+import { useAppStore } from "@/store/app-storage";
 
 const profile = () => {
   let userId = JSON.parse(useLocalSearchParams<any>().userId as string);
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [isCurrentUser, setIsCurrentUser] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -48,6 +50,17 @@ const profile = () => {
     } catch (error) {
       console.log("Error getting user posts: ", error);
     }
+  };
+
+  const handleFollowersPress = (activeScreen: string) => {
+    router.push({
+      pathname: "/followings",
+      params: {
+        followers: JSON.stringify(userFollowers),
+        followings: JSON.stringify(userFollowings),
+        activeScreen,
+      },
+    });
   };
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
@@ -133,7 +146,10 @@ const profile = () => {
             paddingBottom: 10,
           }}
         >
-          <View style={{ alignItems: "center", flex: 1 }}>
+          <TouchableOpacity
+            style={{ alignItems: "center", flex: 1 }}
+            onPress={() => handleFollowersPress("followers")}
+          >
             <LoadingText
               title={userFollowers.length.toString()}
               loading={loading}
@@ -141,8 +157,11 @@ const profile = () => {
               containerStyle={{ height: 23, width: 25, borderRadius: 10 }}
             />
             <Text style={{ color: Colors.gray }}>Followers</Text>
-          </View>
-          <View style={{ alignItems: "center", flex: 1 }}>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{ alignItems: "center", flex: 1 }}
+            onPress={() => handleFollowersPress("followings")}
+          >
             <LoadingText
               title={userFollowings.length.toString()}
               loading={loading}
@@ -150,7 +169,7 @@ const profile = () => {
               containerStyle={{ height: 23, width: 25, borderRadius: 10 }}
             />
             <Text style={{ color: Colors.gray }}>Following</Text>
-          </View>
+          </TouchableOpacity>
           <View style={{ alignItems: "center", flex: 1 }}>
             <LoadingText
               title={userPosts.length.toString()}
