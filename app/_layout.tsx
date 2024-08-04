@@ -72,9 +72,12 @@ function InitialLayout() {
           }
           // router.replace("/(authenticated)/(tabs)/currentUser");
           setAppLoading(true);
+          // exists
+          //   ? router.replace("/(onboarding)/favoriteCuisine")
+          //   : router.replace("(onboarding)/");
+          // exists ? router.replace("/(authenticated)/EditProfile") : router.replace("(onboarding)/");
           exists ? router.replace("/(authenticated)/(home)/") : router.replace("(onboarding)/");
         });
-        // router.replace("/(authenticated)/(modals)/RankRestaurant/selectedPhotos");
       }
     });
   }, [loaded]);

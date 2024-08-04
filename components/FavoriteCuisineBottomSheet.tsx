@@ -69,6 +69,7 @@ const FavoriteCuisineBottomSheet = ({
       handleIndicatorStyle={{ backgroundColor: Colors.gray }}
       enablePanDownToClose={true}
       onChange={(index) => setBottomSheetOpened(index === 1)}
+      backgroundStyle={{ backgroundColor: "white" }}
     >
       <View style={styles.container}>
         <CustomTextInput

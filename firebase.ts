@@ -893,3 +893,51 @@ export const getFeed = async (currentUserId: string) => {
     return Promise.reject(error);
   }
 };
+
+//Change user's profile picture
+export const changeProfilePicture = async (userId: string, profilePic: string | null) => {
+  try {
+    const db = getDb();
+    if (!db) return Promise.reject("Error: Database not found");
+
+    const dbUrl = `users/${userId}`;
+    const userRef = doc(db, dbUrl);
+
+    await setDoc(
+      userRef,
+      {
+        profilePic,
+      },
+      { merge: true }
+    );
+    console.log(`User ${userId} changed profile picture`);
+    return Promise.resolve();
+  } catch (error) {
+    console.log("Error changing profile picture: ", error);
+    return Promise.reject(error);
+  }
+};
+
+//Change user's profile info
+export const changeProfileInfo = async (userId: string, profileInfo: any) => {
+  try {
+    const db = getDb();
+    if (!db) return Promise.reject("Error: Database not found");
+
+    const dbUrl = `users/${userId}`;
+    const userRef = doc(db, dbUrl);
+
+    await setDoc(
+      userRef,
+      {
+        ...profileInfo,
+      },
+      { merge: true }
+    );
+    console.log(`User ${userId} changed profile info`);
+    return Promise.resolve();
+  } catch (error) {
+    console.log("Error changing profile info: ", error);
+    return Promise.reject(error);
+  }
+};

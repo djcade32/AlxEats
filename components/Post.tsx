@@ -163,7 +163,14 @@ const Post = ({ post }: PostProps) => {
       <View style={{ flexDirection: "row", gap: 8 }}>
         {/* Profile picture */}
         <View style={styles.profilePicture}>
-          <Image source={{ uri: user?.profilePic }} style={styles.profilePicture} />
+          {user?.profilePic && (
+            <Image source={{ uri: user.profilePic }} style={styles.profilePicture} />
+          )}
+          {!user?.profilePic && user && (
+            <Text style={styles.profilePicturePlaceholder}>
+              {user.firstName.charAt(0) + user.lastName.charAt(0)}
+            </Text>
+          )}
         </View>
 
         {/* Post details */}
@@ -321,6 +328,7 @@ const styles = StyleSheet.create({
     borderRadius: 31,
     overflow: "hidden",
     backgroundColor: Colors.lightGray,
+    justifyContent: "center",
   },
 
   detailsContainer: {
@@ -362,5 +370,12 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     marginTop: 10,
     justifyContent: "space-between",
+  },
+
+  profilePicturePlaceholder: {
+    fontSize: Font.medium,
+    color: Colors.black,
+    textAlign: "center",
+    fontFamily: "nm-b",
   },
 });

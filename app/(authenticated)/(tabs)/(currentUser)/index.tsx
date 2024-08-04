@@ -56,6 +56,10 @@ const currentUser = () => {
     router.push({ pathname: "/scored", params: { userId: JSON.stringify(user.id) } });
   };
 
+  const handleEditProfilePress = () => {
+    router.push("/EditProfile");
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
       <Stack.Screen
@@ -81,7 +85,16 @@ const currentUser = () => {
       ></Stack.Screen>
       <View>
         <View style={styles.profileContainer}>
-          <Image source={{ uri: user?.profilePic }} style={styles.profileImage} />
+          <View style={styles.profilePicture}>
+            {user?.profilePic && (
+              <Image source={{ uri: user.profilePic }} style={styles.profileImage} />
+            )}
+            {!user?.profilePic && user && (
+              <Text style={styles.profilePicturePlaceholder}>
+                {user.firstName.charAt(0) + user.lastName.charAt(0)}
+              </Text>
+            )}
+          </View>
           <View style={{ marginLeft: 12, marginTop: 10 }}>
             <View>
               <LoadingText
@@ -99,7 +112,10 @@ const currentUser = () => {
             />
 
             {isCurrentUser && (
-              <TouchableOpacity style={styles.editProfileButton}>
+              <TouchableOpacity
+                style={styles.editProfileButton}
+                onPress={() => handleEditProfilePress()}
+              >
                 <Text
                   style={{
                     color: Colors.gray,
@@ -191,6 +207,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.lightGray,
   },
 
+  profilePicture: {
+    width: 106,
+    height: 106,
+    borderRadius: 106 / 2,
+    overflow: "hidden",
+    backgroundColor: Colors.lightGray,
+    justifyContent: "center",
+  },
+
   editProfileButton: {
     alignItems: "center",
     paddingVertical: 3,
@@ -230,5 +255,12 @@ const styles = StyleSheet.create({
     gap: 15,
     paddingTop: 15,
     paddingBottom: 15,
+  },
+
+  profilePicturePlaceholder: {
+    fontSize: Font.large,
+    color: Colors.black,
+    textAlign: "center",
+    fontFamily: "nm-b",
   },
 });

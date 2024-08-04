@@ -20,6 +20,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
+  username: string;
   favoriteCuisine: string;
   criteria: Criteria[];
   createdAt: string;

@@ -124,6 +124,20 @@ const _layout = () => {
         options={{ headerShown: false, headerTransparent: true }}
       />
       <Stack.Screen
+        name="EditProfile/index"
+        options={{
+          header: () => (
+            <CustomHeader
+              title="Edit Profile"
+              headerLeft={
+                <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />
+              }
+            />
+          ),
+          contentStyle: { backgroundColor: "white" },
+        }}
+      />
+      <Stack.Screen
         name="(modals)/Filter/index"
         options={{
           headerShown: true,
