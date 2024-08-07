@@ -35,6 +35,7 @@ const getStarted = () => {
       user.email = getAuth().currentUser?.email!;
       user.createdAt = new Date().toISOString();
       user.criteria = paramObj.criteria;
+      user.username = paramObj.username;
       console.log("User: ", user);
       await addUserToFirebase(user);
       router.replace("/(authenticated)/home");

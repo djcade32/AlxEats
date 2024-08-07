@@ -55,7 +55,7 @@ const profile = () => {
         options={{
           header: () => (
             <CustomHeader
-              title={`@${user?.firstName}.${user?.lastName}`}
+              title={`@${user?.username}`}
               headerLeft={
                 <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />
               }

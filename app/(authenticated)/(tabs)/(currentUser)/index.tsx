@@ -105,7 +105,7 @@ const currentUser = () => {
               />
             </View>
             <LoadingText
-              title={`@${user?.firstName}.${user?.lastName}`}
+              title={`@${user?.username}`}
               loading={loading}
               textStyle={{ fontSize: 16, color: Colors.gray, marginTop: 5 }}
               containerStyle={{ height: 17, width: 100, borderRadius: 10, marginTop: 5 }}

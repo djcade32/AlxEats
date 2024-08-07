@@ -6,18 +6,25 @@ import Colors from "@/constants/Colors";
 
 import Font from "@/constants/Font";
 import CustomButton from "@/components/CustomButton";
+import { checkIfUsernameExists } from "@/firebase";
 
 const fullname = () => {
   const router = useRouter();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
 
   const handleContinuePressed = async () => {
-    if (!firstName || !lastName) return;
+    if (!firstName || !lastName || !username) return;
+    const usernameExists = await checkIfUsernameExists(username);
+    if (usernameExists) {
+      alert("Username already exists. Please choose another one.");
+      return;
+    }
     router.push({
       pathname: "/(authenticated)/(onboarding)/profilePic",
-      params: { firstName, lastName },
+      params: { firstName, lastName, username },
     });
   };
 
@@ -46,12 +53,22 @@ const fullname = () => {
             showErrorMessage={false}
           />
         </View>
+        <View>
+          <Text style={styles.textInputLabel}>Username</Text>
+          <CustomTextInput
+            name="username"
+            placeholder="Username"
+            value={username}
+            onChange={setUsername}
+            showErrorMessage={false}
+          />
+        </View>
         <CustomButton
           text="Continue"
           buttonStyle={[styles.btnContainer, { backgroundColor: Colors.primary }]}
           textStyle={[styles.btnText, { color: "white" }]}
           onPress={handleContinuePressed}
-          disabled={!firstName || !lastName}
+          disabled={!firstName || !lastName || !username}
         />
       </View>
     </View>

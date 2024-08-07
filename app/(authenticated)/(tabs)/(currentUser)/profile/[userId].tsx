@@ -73,7 +73,7 @@ const profile = () => {
         options={{
           header: () => (
             <CustomHeader
-              title={`@${user?.firstName}.${user?.lastName}`}
+              title={`@${user?.username}`}
               headerLeft={
                 <Ionicons name="chevron-back-circle-outline" size={35} color={Colors.black} />
               }
@@ -111,7 +111,7 @@ const profile = () => {
               />
             </View>
             <LoadingText
-              title={`@${user?.firstName}.${user?.lastName}`}
+              title={`@${user?.username}`}
               loading={loading}
               textStyle={{ fontSize: 16, color: Colors.gray, marginTop: 5 }}
               containerStyle={{ height: 17, width: 100, borderRadius: 10, marginTop: 5 }}

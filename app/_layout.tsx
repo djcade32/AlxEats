@@ -76,7 +76,9 @@ function InitialLayout() {
           //   ? router.replace("/(onboarding)/favoriteCuisine")
           //   : router.replace("(onboarding)/");
           // exists ? router.replace("/(authenticated)/EditProfile") : router.replace("(onboarding)/");
-          exists ? router.replace("/(authenticated)/(home)/") : router.replace("(onboarding)/");
+          exists
+            ? router.replace("/(authenticated)/(tabs)/(home)/")
+            : router.replace("(onboarding)/");
         });
       }
     });

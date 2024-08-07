@@ -12,18 +12,20 @@ import React, { useState } from "react";
 import { Alert, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { TouchableWithoutFeedback } from "react-native-gesture-handler";
 import * as ImagePicker from "expo-image-picker";
-import { changeProfilePicture } from "@/firebase";
+import { changeProfileInfo, changeProfilePicture, checkIfUsernameExists } from "@/firebase";
+import CustomLoadingButton from "@/components/CustomLoadingButton";
 
 const EditProfile = () => {
   const { userDbInfo } = useAppStore();
 
   const [isEditMode, isSetEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [bottomSheetOpened, setBottomSheetOpened] = useState(false);
 
   const [image, setImage] = useState<string | null>(userDbInfo?.profilePic || null);
   const [firstName, setFirstName] = useState(userDbInfo?.firstName || "");
   const [lastName, setLastName] = useState(userDbInfo?.lastName || "");
-  const [username, setUsername] = useState("@Norman.Cade");
+  const [username, setUsername] = useState(`${userDbInfo?.username || ""}`);
   const [favoriteCuisine, setFavoriteCuisine] = useState<string | null>(
     userDbInfo?.favoriteCuisine || ""
   );
@@ -35,8 +37,65 @@ const EditProfile = () => {
   };
 
   const handleSavePressed = () => {
+    if (!isEditMode) {
+      isSetEditMode(true);
+      return;
+    }
+    if (!detectChanges()) {
+      isSetEditMode(false);
+      return;
+    }
+
+    if (isSaving) return;
+    setIsSaving(true);
     if (!isFormValid() && isEditMode) return;
-    isEditMode ? isSetEditMode(false) : isSetEditMode(true);
+
+    checkIfUsernameExists(username)
+      .then((exists) => {
+        if (exists && userDbInfo?.username !== username) {
+          setErrorState((prev) => [
+            ...prev,
+            createError("username", "Username already exists. Please choose another one."),
+          ]);
+          setIsSaving(false);
+          isSetEditMode(false);
+          return;
+        }
+        // Save changes
+        console.log("Save changes");
+        changeProfileInfo(userDbInfo?.id!, {
+          firstName,
+          lastName,
+          username,
+          favoriteCuisine,
+        })
+          .then(() => {
+            isSetEditMode(false);
+          })
+          .catch((error) => {
+            console.log("Error saving profile info: ", error);
+            isSetEditMode(false);
+          })
+          .finally(() => {
+            setIsSaving(false);
+          });
+      })
+      .catch((error) => {
+        console.log("Error checking if username exists: ", error);
+        isSetEditMode(false);
+      });
+  };
+
+  const detectChanges = (): boolean => {
+    if (
+      firstName !== userDbInfo?.firstName ||
+      lastName !== userDbInfo?.lastName ||
+      username !== userDbInfo?.username ||
+      favoriteCuisine !== userDbInfo?.favoriteCuisine
+    ) {
+      return true;
+    }
+    return false;
   };
 
   const isFormValid = () => {
@@ -164,6 +223,7 @@ const EditProfile = () => {
             <Text style={[styles.textSmall, { marginBottom: 5 }]}>Username</Text>
             <View>
               <CustomTextInput
+                icon={<Text style={{ fontSize: Font.small }}>@</Text>}
                 name="username"
                 placeholder="Username"
                 value={username}
@@ -193,12 +253,13 @@ const EditProfile = () => {
             </View>
           </TouchableWithoutFeedback>
           <View style={{ flex: 1 }} />
-          <CustomButton
+          <CustomLoadingButton
             text={isEditMode ? "Save" : "Edit"}
             buttonStyle={[styles.editBtnContainer, { backgroundColor: Colors.primary }]}
             textStyle={[styles.editBtnText, { color: "white" }]}
             onPress={handleSavePressed}
             disabled={!favoriteCuisine}
+            loading={isSaving}
           />
         </View>
       </View>

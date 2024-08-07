@@ -941,3 +941,19 @@ export const changeProfileInfo = async (userId: string, profileInfo: any) => {
     return Promise.reject(error);
   }
 };
+
+//Check if username exists
+export const checkIfUsernameExists = async (username: string) => {
+  try {
+    const db = getDb();
+    if (!db) return Promise.reject("Error: Database not found");
+
+    const q = query(collection(db, "users"), where("username", "==", username));
+    const querySnapshot = await getDocs(q);
+
+    return querySnapshot.size > 0;
+  } catch (error) {
+    console.log("Error checking if username exists: ", error);
+    return Promise.reject(error);
+  }
+};

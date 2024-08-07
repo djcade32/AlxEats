@@ -46,7 +46,9 @@ const profilePic = () => {
         {image ? (
           <Image source={{ uri: image }} style={{ height: 200, width: 200, borderRadius: 100 }} />
         ) : (
-          <Text style={styles.initials}>NC</Text>
+          <Text style={styles.initials}>
+            {paramObj.firstName.charAt(0) + paramObj.lastName.charAt(0)}
+          </Text>
         )}
         <TouchableWithoutFeedback onPress={handleAddProfilePicturePressed}>
           <View style={styles.addIconContainer}>

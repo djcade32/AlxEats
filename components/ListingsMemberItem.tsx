@@ -7,6 +7,7 @@ import { User } from "@/interfaces";
 import { followUser, unfollowUser } from "@/firebase";
 import { useAppStore } from "@/store/app-storage";
 import LoadingText from "./LoadingText";
+import { wait } from "@/common-utils";
 
 interface ListingsMemberItemProps {
   user: User;
@@ -26,9 +27,12 @@ const ListingsMemberItem = ({ user, ranking = false, tabScreenName }: ListingsMe
   };
 
   useEffect(() => {
-    if (!userDbInfo?.profilePic) return setIsLoading(false);
     //Determine if following user
     setIsFollowing(!!userFollowing?.find((id) => id === user.id));
+    (async () => {
+      await wait(1);
+      setIsLoading(false);
+    })();
   }, []);
 
   const handleFollowPressed = async () => {
@@ -82,7 +86,7 @@ const ListingsMemberItem = ({ user, ranking = false, tabScreenName }: ListingsMe
               <LoadingText
                 loading={isLoading}
                 textStyle={styles.username}
-                title={`@${user.firstName.toLowerCase()}.${user.lastName.toLowerCase()}`}
+                title={`@${user?.username}`}
                 containerStyle={{ width: 80, height: 15, borderRadius: 15 }}
                 numberOfLines={1}
               />
@@ -185,7 +189,7 @@ const styles = StyleSheet.create({
 
   profilePicturePlaceholder: {
     fontSize: Font.medium,
-    color: "white",
+    color: Colors.black,
     fontFamily: "nm-b",
   },
 });
