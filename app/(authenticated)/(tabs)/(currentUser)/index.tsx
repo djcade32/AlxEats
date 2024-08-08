@@ -74,7 +74,7 @@ const currentUser = () => {
                   <TouchableOpacity>
                     <Ionicons name="notifications-outline" size={22} color={Colors.black} />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => router.push("/settings")}>
+                  <TouchableOpacity onPress={() => router.push("/(settings)/")}>
                     <Ionicons name="settings-outline" size={22} color={Colors.black} />
                   </TouchableOpacity>
                 </View>

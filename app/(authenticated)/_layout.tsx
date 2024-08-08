@@ -149,7 +149,10 @@ const _layout = () => {
         name="(modals)/Filter/cuisinesFilter"
         options={{ headerShown: true, headerTransparent: true, presentation: "modal" }}
       />
-      <Stack.Screen name="settings" options={{ headerShown: true, headerTransparent: true }} />
+      <Stack.Screen
+        name="(settings)/index"
+        options={{ headerShown: true, headerTransparent: true }}
+      />
       <Stack.Screen
         name="(modals)/editComment"
         options={{ presentation: "modal", gestureEnabled: false }}
