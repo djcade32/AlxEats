@@ -14,6 +14,7 @@ import EmailVerificationModal from "@/components/EmailVerificationModal";
 import { useAppStore } from "@/store/app-storage";
 import { checkIfEmailExists, sendEmailVerification, signIn } from "@/firebase";
 import { FirebaseError } from "firebase/app";
+import { getAuth } from "firebase/auth";
 
 const signin = () => {
   const { pendingEmailVerification, setPendingEmailVerification, setAppLoading } = useAppStore();
@@ -47,7 +48,7 @@ const signin = () => {
         sendEmailVerification().then(() => setPendingEmailVerification(true));
         return;
       }
-      checkIfEmailExists().then((exists) => {
+      checkIfEmailExists(getAuth().currentUser?.email || "").then((exists) => {
         setAppLoading(true);
         exists ? router.replace("/(authenticated)/(home)/") : router.replace("(onboarding)/");
       });

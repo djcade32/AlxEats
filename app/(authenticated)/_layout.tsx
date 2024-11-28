@@ -244,6 +244,14 @@ const _layout = () => {
           contentStyle: { backgroundColor: "white" },
         }}
       />
+      <Stack.Screen
+        name="(settings)/changeEmail"
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          contentStyle: { backgroundColor: "white" },
+        }}
+      />
     </Stack>
   );
 };

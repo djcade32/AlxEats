@@ -28,6 +28,9 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail as sendPasswordResetEmailFirebase,
   UserCredential,
+  updateEmail,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
 } from "firebase/auth";
 import firebase from "firebase/compat/app";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
@@ -126,7 +129,7 @@ export const sendEmailVerification = async (): Promise<void> => {
     console.log("ERROR: There was a problem getting the current user.");
     return Promise.resolve();
   }
-  sendEmailVerificationFirebase(getAuth().currentUser!)
+  sendEmailVerificationFirebase(user || getAuth().currentUser!)
     .then(() => {
       console.log("Email verification sent!");
       return Promise.resolve();
@@ -181,10 +184,9 @@ export const sendPasswordResetEmail = async (email: string): Promise<void> => {
 /* `checkIfEmailExists` is a function that checks if the email of the currently
 authenticated user exists in the Firebase database. Here's a breakdown of what the
 function does: */
-export const checkIfEmailExists = async (): Promise<any> => {
+export const checkIfEmailExists = async (email: string): Promise<any> => {
   let emailExists = null;
   const db = getDb();
-  const email = getAuth().currentUser?.email;
   if (!db || !email) return emailExists;
   const q = query(collection(db, "users"), where("email", "==", email.toLowerCase()));
   const querySnapshot = await getDocs(q);
@@ -956,4 +958,30 @@ export const checkIfUsernameExists = async (username: string) => {
     console.log("Error checking if username exists: ", error);
     return Promise.reject(error);
   }
+};
+
+// Update user email
+export const updateUserEmail = async (email: string) => {
+  const auth = getAuth();
+  if (!auth.currentUser) return Promise.reject("Error: User not found");
+  await sendEmailVerificationFirebase(auth.currentUser);
+
+  // updateEmail(auth.currentUser, email)
+  //   .then(() => {
+  //     console.log("Email updated");
+  //   })
+  //   .catch((error) => {
+  //     console.log("Error updating email: ", error);
+  //     return Promise.reject(error);
+  //   });
+  return Promise.resolve();
+};
+
+//Reauthenticate user
+export const reauthenticateUser = async (email: string, password: string) => {
+  const auth = getAuth();
+  if (!auth.currentUser) return Promise.reject("Error: User not found");
+  const credential = EmailAuthProvider.credential(email, password);
+
+  return await reauthenticateWithCredential(auth.currentUser, credential);
 };

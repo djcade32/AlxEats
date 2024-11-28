@@ -65,15 +65,18 @@ function InitialLayout() {
       } else if (user && !user.emailVerified) {
         return;
       } else {
+        const email = getAuth().currentUser?.email || "";
         setAuthUser(user);
-        checkIfEmailExists().then((exists) => {
+        checkIfEmailExists(email).then((exists) => {
           if (exists) {
             setUserDbInfo({ ...exists, criteria: JSON.parse(exists.criteria) });
           }
           // router.replace("/(authenticated)/(tabs)/currentUser");
           setAppLoading(true);
 
-          // exists ? router.replace("/(authenticated)/(settings)/") : router.replace("(onboarding)/");
+          // exists
+          //   ? router.replace("/(authenticated)/(settings)/changeEmail")
+          //   : router.replace("(onboarding)/");
           exists
             ? router.replace("/(authenticated)/(tabs)/(home)/")
             : router.replace("(onboarding)/");

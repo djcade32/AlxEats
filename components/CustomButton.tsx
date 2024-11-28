@@ -8,7 +8,7 @@ interface CustomButtonProps {
   buttonStyle?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
   icon?: React.ReactNode;
-  onPress?: () => void;
+  onPress: () => void | Promise<void>;
   disabled?: boolean;
 }
 
