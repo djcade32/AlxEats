@@ -18,7 +18,7 @@ import { useAppStore } from "@/store/app-storage";
 import { LinearGradient } from "expo-linear-gradient";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBWVyMn8YYpYmoOiMPM7JjRuSm2e2UT_9U",
+  // Use browser key
   // apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
   authDomain: "alxeats-cb5e6.firebaseapp.com",
   projectId: "alxeats-cb5e6",
